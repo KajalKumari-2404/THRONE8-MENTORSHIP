@@ -399,6 +399,281 @@ border-color: #ddd;
 
 
 
+/* Mentor Earnings Dashboard */
+.earnings-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 40px auto;
+  color: #f4f2ff;
+}
+
+.earnings-header,
+.earnings-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.earnings-eyebrow {
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.earnings-header h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 5vw, 44px);
+}
+
+.earnings-subtitle,
+.earnings-section-heading p {
+  color: #a9a6bc;
+  line-height: 1.6;
+}
+
+.earnings-badge {
+  padding: 10px 14px;
+  border: 1px solid #494064;
+  border-radius: 999px;
+  color: #c4b5fd;
+  white-space: nowrap;
+}
+
+.earnings-token-form,
+.earnings-section {
+  margin-top: 26px;
+  padding: 24px;
+  border: 1px solid #302b43;
+  border-radius: 18px;
+  background: #171522;
+}
+
+.earnings-token-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.earnings-token-row {
+  display: flex;
+  gap: 12px;
+}
+
+.earnings-token-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #403953;
+  border-radius: 10px;
+  background: #100e19;
+  color: #fff;
+}
+
+.earnings-token-row button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #8b5cf6;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.earnings-token-row button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.earnings-help,
+.earnings-section-heading p {
+  font-size: 13px;
+  color: #a9a6bc;
+}
+
+.earnings-error {
+  margin-top: 16px;
+  padding: 13px;
+  border: 1px solid #7f333e;
+  border-radius: 10px;
+  background: #32191f;
+  color: #fecaca;
+}
+
+.earnings-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.earnings-card {
+  padding: 21px;
+  border: 1px solid #302b43;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #201b30, #15131f);
+}
+
+.earnings-card p {
+  margin: 0 0 15px;
+  color: #b8b3ca;
+  font-size: 13px;
+}
+
+.earnings-card h2 {
+  margin: 0;
+  font-size: clamp(20px, 2.5vw, 27px);
+  overflow-wrap: anywhere;
+}
+
+.earnings-section-heading h2 {
+  margin: 0;
+}
+
+.earnings-section-heading span {
+  color: #c4b5fd;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.earnings-table-wrap {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.earnings-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.earnings-table th,
+.earnings-table td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #302b43;
+  vertical-align: middle;
+}
+
+.earnings-table th {
+  color: #aaa4c0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.earning-id {
+  min-width: 170px;
+  max-width: 210px;
+  overflow-wrap: anywhere;
+  color: #c4b5fd;
+}
+
+.earning-status {
+  display: inline-block;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #302744;
+  color: #ddd1ff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-paid,
+.status-eligible {
+  background: #173a2d;
+  color: #86efac;
+}
+
+.status-on_hold,
+.status-reversed {
+  background: #40242b;
+  color: #fecaca;
+}
+
+.earning-reason {
+  display: block;
+  margin-top: 6px;
+  color: #aaa4c0;
+  max-width: 180px;
+}
+
+.earnings-empty {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #100e19;
+  color: #b8b3ca;
+  line-height: 1.6;
+}
+
+.earnings-disclaimer {
+  margin: 22px 0;
+  color: #a9a6bc;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+@media (max-width: 850px) {
+  .earnings-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .earnings-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .earnings-token-row {
+    flex-direction: column;
+  }
+
+  .earnings-token-row button {
+    width: 100%;
+  }
+
+  .earnings-section {
+    padding: 16px;
+  }
+
+  .earnings-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+
+
+
+.view-switch,
+.dashboard-nav {
+  width: min(100% - 32px, 1100px);
+  margin: 20px auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.view-switch button,
+.dashboard-nav button {
+  padding: 11px 18px;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  background: #1e293b;
+  color: white;
+  cursor: pointer;
+}
+
+.view-switch button:hover,
+.dashboard-nav button:hover {
+  background: #334155;
+}
+
+
+
+
 
 
 

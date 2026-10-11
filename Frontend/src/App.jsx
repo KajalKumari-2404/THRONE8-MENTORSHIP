@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import MentorEarnings from "./MentorEarnings";
 
 const API_URL = "http://localhost:5000/api/v1";
 
@@ -10,6 +11,7 @@ const [message, setMessage] = useState("");
 const [status, setStatus] = useState("idle");
 const [loading, setLoading] = useState(false);
 const [receipt, setReceipt] = useState(null);
+const [view, setView] = useState("payment");
 
 const handlePayment = async () => {
 if (!bookingId.trim() || !token.trim()) {
@@ -17,6 +19,31 @@ setStatus("error");
 setMessage("Please enter both Booking ID and Student Token.");
 return;
 }
+
+// if (!window.Razorpay) {
+//   setStatus("error");
+//   setMessage(
+//     "Razorpay Checkout could not load. Refresh the page and try again."
+//   );
+
+// if (view === "earnings") {
+//   return (
+//     <>
+//       <div className="dashboard-nav">
+//         <button onClick={() => setView("payment")}>
+//           ← Back to Payment
+//         </button>
+//       </div>
+
+//       <MentorEarnings />
+//     </>
+//   );
+// }
+
+//   return;
+// }
+
+
 
 if (!window.Razorpay) {
   setStatus("error");
@@ -136,6 +163,20 @@ try {
 
 };
 
+if (view === "earnings") {
+  return (
+    <>
+      <div className="dashboard-nav">
+        <button onClick={() => setView("payment")}>
+          ← Back to Payment
+        </button>
+      </div>
+
+      <MentorEarnings />
+    </>
+  );
+}
+
 const statusLabels = {
 idle: "Ready for payment",
 processing: "Payment in progress",
@@ -144,7 +185,16 @@ success: "Payment verified",
 error: "Action required",
 };
 
-return ( <main className="payment-page"> <section className="payment-card"> <p className="brand">THRONE8</p>
+return ( <main className="payment-page">
+  <div className="view-switch">
+  <button
+    type="button"
+    onClick={() => setView("earnings")}
+  >
+    Mentor Earnings Dashboard
+  </button>
+</div>
+   <section className="payment-card"> <p className="brand">THRONE8</p>
 
 ```
     <div className="payment-heading">
