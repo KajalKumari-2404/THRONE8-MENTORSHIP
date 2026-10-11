@@ -5,7 +5,8 @@ const ledgerEntrySchema = new mongoose.Schema(
   {
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "BookingModel",
+      // ref: "BookingModel",
+      ref: "Booking",
       required: true,
       index: true,
     },

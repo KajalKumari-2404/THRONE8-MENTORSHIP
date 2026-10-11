@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const BookingModel = require("../models/bookingModel");
 const MentorAccountModel = require("../models/mentorAccountModel");
 const UserModel = require("../models/userModel");
+const EarningModel = require("../models/earningModel");
 
 const createBooking = async (req, res) => {
   try {
@@ -92,8 +93,8 @@ const createBooking = async (req, res) => {
 
     // Temporary development price: ₹1,000.
     // The client cannot set the booking price.
-    // const pricePaise = 100000;
-    const pricePaise = 100;
+    const pricePaise = 100000;
+    // const pricePaise = 100;
     const commissionRateBps = mentorAccount.commissionRateBps;
 
     const commissionPaise = Math.floor(
@@ -129,7 +130,283 @@ const createBooking = async (req, res) => {
   }
 };
 
-module.exports = { createBooking };
+
+
+const requestSessionCompletion = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking ID",
+      });
+    }
+
+    if (req.user.role !== "MENTOR") {
+      return res.status(403).json({
+        success: false,
+        message: "Only mentors can request session completion",
+      });
+    }
+
+    const booking = await BookingModel.findOne({
+      _id: bookingId,
+      mentorId: req.user._id,
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      return res.status(409).json({
+        success: false,
+        message: "Only confirmed bookings can be completed",
+      });
+    }
+
+    if (booking.slotEnd > new Date()) {
+      return res.status(409).json({
+        success: false,
+        message: "The session cannot be completed before its scheduled end",
+      });
+    }
+
+    if (booking.completionRequestedAt) {
+      return res.status(409).json({
+        success: false,
+        message: "Completion has already been requested",
+      });
+    }
+
+    booking.completionRequestedAt = new Date();
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Session completion requested. Student confirmation is required.",
+      booking,
+    });
+  } catch (error) {
+    console.error("Request session completion error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to request session completion",
+    });
+  }
+};
+
+
+
+const confirmSessionCompletion = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const { bookingId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking ID",
+      });
+    }
+
+    if (req.user.role !== "STUDENT") {
+      return res.status(403).json({
+        success: false,
+        message: "Only the student can confirm session completion",
+      });
+    }
+
+    let response;
+
+    await session.withTransaction(async () => {
+      const booking = await BookingModel.findOne({
+        _id: bookingId,
+        studentId: req.user._id,
+      }).session(session);
+
+      if (!booking) {
+        const error = new Error("Booking not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      if (
+        booking.status !== "CONFIRMED" ||
+        !booking.completionRequestedAt ||
+        booking.completionDisputedAt
+      ) {
+        const error = new Error(
+          "Booking is not eligible for completion confirmation"
+        );
+        error.statusCode = 409;
+        throw error;
+      }
+
+      if (booking.studentConfirmedAt || booking.completedAt) {
+        const error = new Error("Session is already completed");
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const earning = await EarningModel.findOne({
+        bookingId: booking._id,
+      }).session(session);
+
+      if (!earning || earning.state !== "PENDING_SESSION") {
+        const error = new Error(
+          "Pending earning record not found; manual review is required"
+        );
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const now = new Date();
+      const eligibleAt = new Date(now);
+      eligibleAt.setDate(eligibleAt.getDate() + 15);
+
+      booking.studentConfirmedAt = now;
+      booking.completedAt = now;
+      booking.payoutEligibleAt = eligibleAt;
+      booking.status = "COMPLETED";
+
+      earning.state = "HOLDING";
+      earning.eligibleAt = eligibleAt;
+      earning.holdReason = null;
+
+      await booking.save({ session });
+      await earning.save({ session });
+
+      response = {
+        success: true,
+        message:
+          "Session confirmed. Earnings will become eligible after 15 calendar days, subject to refund and dispute checks.",
+        booking,
+        earning,
+      };
+    });
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Confirm session completion error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode
+        ? error.message
+        : "Failed to confirm session completion",
+    });
+  } finally {
+    await session.endSession();
+  }
+};
+
+const disputeSessionCompletion = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+
+    if (!mongoose.isValidObjectId(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking ID",
+      });
+    }
+
+    if (req.user.role !== "STUDENT") {
+      return res.status(403).json({
+        success: false,
+        message: "Only the student can dispute session completion",
+      });
+    }
+
+    if (typeof reason !== "string" || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "A dispute reason is required",
+      });
+    }
+
+    let response;
+
+    await session.withTransaction(async () => {
+      const booking = await BookingModel.findOne({
+        _id: bookingId,
+        studentId: req.user._id,
+      }).session(session);
+
+      if (!booking) {
+        const error = new Error("Booking not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      if (
+        booking.status !== "CONFIRMED" ||
+        !booking.completionRequestedAt ||
+        booking.studentConfirmedAt ||
+        booking.completionDisputedAt
+      ) {
+        const error = new Error(
+          "This booking cannot be disputed through this endpoint"
+        );
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const earning = await EarningModel.findOne({
+        bookingId: booking._id,
+      }).session(session);
+
+      if (!earning || earning.state !== "PENDING_SESSION") {
+        const error = new Error(
+          "Pending earning record not found; manual review is required"
+        );
+        error.statusCode = 409;
+        throw error;
+      }
+
+      booking.status = "DISPUTED";
+      booking.completionDisputedAt = new Date();
+
+      earning.state = "ON_HOLD";
+      earning.holdReason = reason.trim().slice(0, 1000);
+
+      await booking.save({ session });
+      await earning.save({ session });
+
+      response = {
+        success: true,
+        message: "Dispute recorded. The earning is on hold for review.",
+        booking,
+        earning,
+      };
+    });
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Dispute session completion error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode
+        ? error.message
+        : "Failed to record session dispute",
+    });
+  } finally {
+    await session.endSession();
+  }
+};
+
+module.exports = { createBooking, requestSessionCompletion, confirmSessionCompletion, disputeSessionCompletion };
 
 
 

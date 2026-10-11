@@ -18,6 +18,7 @@ throw new Error("MONGO_URI is missing in Backend/.env");
 await mongoose.connect(process.env.MONGO_URI);
 
 console.log("MongoDB connected successfully");
+console.log("Connected database:", mongoose.connection.name);
 
 app.listen(PORT, () => {
   console.log(`THRONE8 server running on port ${PORT}`);

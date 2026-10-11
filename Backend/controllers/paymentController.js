@@ -5,6 +5,9 @@ const crypto = require("node:crypto");
 
 const BookingModel = require("../models/bookingModel");
 const PaymentModel = require("../models/paymentModel");
+const {
+processCapturedPayment,
+} = require("../services/processCapturedPayment");
 
 const createPaymentOrder = async (req, res) => {
   try {
@@ -118,6 +121,8 @@ const createPaymentOrder = async (req, res) => {
   }
 };
 
+
+
 const verifyPayment = async (req, res) => {
   try {
     const {
@@ -136,6 +141,16 @@ const verifyPayment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Booking ID and all Razorpay payment fields are required",
+      });
+    }
+
+    if (
+      !process.env.RAZORPAY_KEY_ID ||
+      !process.env.RAZORPAY_KEY_SECRET
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay keys are not configured",
       });
     }
 
@@ -163,18 +178,6 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    if (
-      payment.status === "CAPTURED" &&
-      payment.gatewayPaymentId === razorpay_payment_id
-    ) {
-      return res.status(200).json({
-        success: true,
-        message: "Payment was already verified",
-        paymentStatus: payment.status,
-        bookingStatus: booking.status,
-      });
-    }
-
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -198,7 +201,6 @@ const verifyPayment = async (req, res) => {
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
-    // Verify the payment directly with Razorpay.
     const providerPayment = await razorpay.payments.fetch(
       razorpay_payment_id
     );
@@ -222,47 +224,36 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    if (
-      booking.status !== "PENDING_PAYMENT" &&
-      booking.status !== "CONFIRMED"
-    ) {
-      return res.status(409).json({
-        success: false,
-        message: "Booking is not in a payable state",
-      });
-    }
-
-    payment.gatewayPaymentId = razorpay_payment_id;
-    payment.status = "CAPTURED";
-    payment.capturedAt = new Date();
-    payment.rawProviderRefs = {
+    const result = await processCapturedPayment({
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
+      amount: providerPayment.amount,
+      currency: providerPayment.currency,
       providerStatus: providerPayment.status,
-    };
-
-    await payment.save();
-
-    if (booking.status === "PENDING_PAYMENT") {
-      booking.status = "CONFIRMED";
-      await booking.save();
-    }
+      source: "frontend_verification",
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Payment verified and booking confirmed",
-      paymentStatus: payment.status,
-      bookingStatus: booking.status,
+      message: result.alreadyCaptured
+        ? "Payment was already processed"
+        : "Payment verified and processed",
+      paymentStatus: result.paymentStatus,
+      bookingStatus: result.bookingStatus,
     });
   } catch (error) {
     console.error("Verify payment error:", error.message);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: "Payment verification failed. Check payment status before retrying.",
+      message: error.statusCode
+        ? error.message
+        : "Payment verification failed. Check payment status before retrying.",
     });
   }
 };
+
+
 
 module.exports = {
   createPaymentOrder,

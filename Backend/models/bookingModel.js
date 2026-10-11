@@ -64,10 +64,32 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    completedAt: {
-      type: Date,
-      default: null,
-    },
+    // completedAt: {
+    //   type: Date,
+    //   default: null,
+    // },
+
+    
+completedAt: {
+  type: Date,
+  default: null,
+},
+
+completionRequestedAt: {
+  type: Date,
+  default: null,
+},
+
+studentConfirmedAt: {
+  type: Date,
+  default: null,
+},
+
+completionDisputedAt: {
+  type: Date,
+  default: null,
+  index: true,
+},
 
     commissionRateBps: {
       type: Number,

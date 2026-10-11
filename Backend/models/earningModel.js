@@ -5,7 +5,8 @@ const earningSchema = new mongoose.Schema(
   {
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "BookingModel",
+      // ref: "BookingModel",
+      ref: "Booking",
       required: true,
       unique: true,
     },
