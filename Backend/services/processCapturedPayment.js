@@ -171,10 +171,11 @@ const processCapturedPayment = async ({
             state: "PENDING_SESSION",
           },
         ],
-        { session }
+              { session, ordered: true }
       );
 
       const commonMetadata = {
+
         orderId,
         paymentId,
         source: source || "unknown",
@@ -218,8 +219,9 @@ const processCapturedPayment = async ({
             description: "Mentor earning from booking",
             metadata: commonMetadata,
           },
-        ],
-        { session }
+
+              ],
+        { session, ordered: true }
       );
 
       result = {
