@@ -15,26 +15,19 @@ const app = express();
 
 app.use(helmet());
 
-// app.use(
-//   cors({
-//     origin: process.env.CLIENT_URL || "http://localhost:5173",
-//     credentials: true,
-//   })
-// );
-
 app.use(
-cors({
-origin: ["http://localhost:5173", "http://localhost:5174"],
-credentials: true,
-})
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
+    credentials: true,
+  })
 );
 
-
-// Razorpay webhook route will be mounted here,
-// BEFORE express.json(), so it can access the raw body.
-// We will add its controller in the next step.
-
+// Webhook ko JSON parser se pehle mount karna zaroori hai.
 app.use("/api/v1/webhooks", webhookRoutes);
+
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -55,6 +48,7 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+// app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/mentor/earnings", mentorEarningsRoutes);

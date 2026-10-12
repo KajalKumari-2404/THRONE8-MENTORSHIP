@@ -132,6 +132,57 @@ const createBooking = async (req, res) => {
 
 
 
+const getMyBookings = async (req, res) => {
+  try {
+    const bookings = await BookingModel.find({
+      studentId: req.user._id,
+    })
+      .populate("mentorId", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    console.error("Get student bookings error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch bookings",
+    });
+  }
+};
+
+
+const getMentorBookings = async (req, res) => {
+  try {
+    const bookings = await BookingModel.find({
+      mentorId: req.user._id,
+    })
+      .populate("studentId", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    console.error("Get mentor bookings error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch mentor bookings",
+    });
+  }
+};
+
+
+
 const requestSessionCompletion = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -406,7 +457,7 @@ const disputeSessionCompletion = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, requestSessionCompletion, confirmSessionCompletion, disputeSessionCompletion };
+module.exports = { createBooking, getMyBookings, getMentorBookings, requestSessionCompletion, confirmSessionCompletion, disputeSessionCompletion };
 
 
 
