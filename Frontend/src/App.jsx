@@ -1,10 +1,17 @@
 import { useState } from "react";
 import "./App.css";
-import MentorEarnings from "./MentorEarnings";
+import SessionCompletion from "./SessionCompletion";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import MentorEarnings from "./pages/MentorEarnings";
+import ProtectedRoute from "./ProtectedRoute";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 const API_URL = "http://localhost:5000/api/v1";
 
-function App() {
+// function App() {
+function PaymentApp() {
 const [bookingId, setBookingId] = useState("");
 const [token, setToken] = useState("");
 const [message, setMessage] = useState("");
@@ -12,6 +19,7 @@ const [status, setStatus] = useState("idle");
 const [loading, setLoading] = useState(false);
 const [receipt, setReceipt] = useState(null);
 const [view, setView] = useState("payment");
+const [activeScreen, setActiveScreen] = useState("payment");
 
 const handlePayment = async () => {
 if (!bookingId.trim() || !token.trim()) {
@@ -163,6 +171,19 @@ try {
 
 };
 
+if (activeScreen === "sessions") {
+  return (
+    <>
+      <div className="dashboard-nav">
+        <button onClick={() => setActiveScreen("payment")}>
+          ← Back to Payment
+        </button>
+      </div>
+      <SessionCompletion />
+    </>
+  );
+}
+
 if (view === "earnings") {
   return (
     <>
@@ -193,6 +214,12 @@ return ( <main className="payment-page">
   >
     Mentor Earnings Dashboard
   </button>
+  <button
+  type="button"
+  onClick={() => setActiveScreen("sessions")}
+>
+  Session Completion
+</button>
 </div>
    <section className="payment-card"> <p className="brand">THRONE8</p>
 
@@ -314,6 +341,25 @@ return ( <main className="payment-page">
     </p>
   </section>
 </main>
+
+);
+}
+
+function App() {
+return ( <BrowserRouter> <Routes>
+<Route path="/login" element={<Login />} />
+<Route path="/register" element={<Register />} />
+
+    <Route element={<ProtectedRoute />}>
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/payment" element={<PaymentApp />} />
+      <Route path="/mentor/earnings" element={<MentorEarnings />} />
+    </Route>
+
+    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+  </Routes>
+</BrowserRouter>
 
 );
 }
