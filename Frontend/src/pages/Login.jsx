@@ -42,7 +42,15 @@ sessionStorage.setItem("throne8User", JSON.stringify(user));
 console.log("Token saved:", Boolean(sessionStorage.getItem("throne8Token")));
 console.log("Logged-in role:", user?.role);
 
-navigate("/mentor/earnings");
+// navigate("/mentor/earnings");
+// navigate("/dashboard");
+if (user?.role?.toUpperCase() === "ADMIN") {
+  navigate("/admin/finance");
+} else if (user?.role?.toUpperCase() === "MENTOR") {
+  navigate("/mentor/earnings");
+} else {
+  navigate("/dashboard");
+}
 
 } catch (error) {
   setMessage(

@@ -66,13 +66,21 @@ export default function MentorEarnings() {
     ["Reversed", summary?.reversedPaise],
   ];
 
-  if (loading) return <main className="earnings-page">
-    <h1>EARNINGS COMPONENT LOADED</h1>
-    <p>Loading earnings...</p></main>;
+  // if (loading) return <main className="earnings-page">
+  //   <h1>EARNINGS COMPONENT LOADED</h1>
+  //   <p>Loading earnings...</p></main>;
+
+  if (loading) {
+  return (
+    <main className="earnings-page">
+      <p>Loading earnings...</p>
+    </main>
+  );
+}
 
   return (
     <main className="earnings-page">
-        <h1>EARNINGS COMPONENT LOADED</h1>
+        {/* <h1>EARNINGS COMPONENT LOADED</h1> */}
       <header className="earnings-header">
         <div>
           <span className="earnings-eyebrow">THRONE8 MENTOR PORTAL</span>

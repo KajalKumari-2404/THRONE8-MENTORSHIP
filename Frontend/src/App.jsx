@@ -7,6 +7,9 @@ import Dashboard from "./pages/Dashboard";
 import MentorEarnings from "./pages/MentorEarnings";
 import ProtectedRoute from "./ProtectedRoute";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./Home";
+import AdminFinance from "./pages/AdminFinance";
+// import api from "../api";
 
 const API_URL = "http://localhost:5000/api/v1";
 
@@ -354,9 +357,11 @@ return ( <BrowserRouter> <Routes>
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/payment" element={<PaymentApp />} />
       <Route path="/mentor/earnings" element={<MentorEarnings />} />
+      <Route path="/admin/finance" element={<AdminFinance />} />
     </Route>
 
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> */}
+    <Route path="/" element={<Home />} />
     <Route path="*" element={<Navigate to="/dashboard" replace />} />
   </Routes>
 </BrowserRouter>
