@@ -46,8 +46,12 @@ console.log("Logged-in role:", user?.role);
 // navigate("/dashboard");
 if (user?.role?.toUpperCase() === "ADMIN") {
   navigate("/admin/finance");
+// } else if (user?.role?.toUpperCase() === "MENTOR") {
+//   navigate("/mentor/earnings");
+
 } else if (user?.role?.toUpperCase() === "MENTOR") {
-  navigate("/mentor/earnings");
+  // navigate("/dashboard");
+  navigate("/mentor/dashboard");
 } else {
   navigate("/dashboard");
 }

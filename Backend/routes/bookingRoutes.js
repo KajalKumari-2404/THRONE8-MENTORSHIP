@@ -10,6 +10,7 @@ const {
   confirmSessionCompletion,
   disputeSessionCompletion,
   getMentorBookings,
+  cancelBooking,
 } = require("../controllers/bookingController");
 
 const router = express.Router();
@@ -54,6 +55,13 @@ router.patch(
   protect,
   authorize("STUDENT"),
   disputeSessionCompletion
+);
+
+router.patch(
+  "/:bookingId/cancel",
+  protect,
+  authorize("STUDENT"),
+  cancelBooking
 );
 
 module.exports = router;

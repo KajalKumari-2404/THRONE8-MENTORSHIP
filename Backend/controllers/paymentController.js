@@ -255,7 +255,171 @@ const verifyPayment = async (req, res) => {
 
 
 
+const requestPaymentRefund = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid bookingId is required",
+      });
+    }
+
+    const booking = await BookingModel.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    const payment = await PaymentModel.findOne({
+      bookingId: booking._id,
+      status: "CAPTURED",
+    });
+
+    if (!payment || !payment.gatewayPaymentId) {
+      return res.status(409).json({
+        success: false,
+        message: "No captured payment is available for refund",
+      });
+    }
+
+    if (payment.refundStatus === "PENDING") {
+      return res.status(409).json({
+        success: false,
+        message: "A refund is already pending",
+        refundId: payment.refundId,
+      });
+    }
+
+    if (
+      payment.refundStatus === "PROCESSED" ||
+      payment.status === "REFUNDED"
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Payment has already been refunded",
+      });
+    }
+
+    if (
+      !process.env.RAZORPAY_KEY_ID ||
+      !process.env.RAZORPAY_KEY_SECRET
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay keys are not configured",
+      });
+    }
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    // payment.refundStatus = "PENDING";
+    // payment.refundAmountPaise = payment.amountPaise;
+    // payment.refundRequestedAt = new Date();
+    // await payment.save();
+
+const lockedPayment = await PaymentModel.findOneAndUpdate(
+  {
+    _id: payment._id,
+    status: "CAPTURED",
+    refundStatus: { $in: ["NOT_REQUESTED", null] },
+  },
+  {
+    $set: {
+      refundStatus: "PENDING",
+      refundAmountPaise: payment.amountPaise,
+      refundRequestedAt: new Date(),
+    },
+  },
+  { new: true }
+);
+
+
+if (!lockedPayment) {
+  return res.status(409).json({
+    success: false,
+    message:
+      "Refund already requested or payment is no longer eligible",
+  });
+}
+
+    try {
+      const refund = await razorpay.payments.refund(
+        lockedPayment.gatewayPaymentId,
+        {
+          amount: lockedPayment.refundAmountPaise,
+          notes: {
+            bookingId: booking._id.toString(),
+            reason: "Admin-approved booking refund",
+          },
+        }
+      );
+
+      const updatedPayment = await PaymentModel.findOneAndUpdate(
+        {
+          _id: lockedPayment._id,
+          refundStatus: "PENDING",
+        },
+        {
+          $set: {
+            refundId: refund.id,
+            refundStatus:
+              refund.status === "processed" ? "PROCESSED" : "PENDING",
+            ...(refund.status === "processed"
+              ? {
+                  refundProcessedAt: new Date(),
+                  status: "REFUNDED",
+                }
+              : {}),
+          },
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          refund.status === "processed"
+            ? "Refund processed successfully"
+            : "Refund submitted; provider confirmation is pending",
+        refundId: refund.id,
+        refundStatus: updatedPayment?.refundStatus ?? "PENDING",
+        paymentStatus: updatedPayment?.status ?? "CAPTURED",
+      });
+    
+} catch (refundError) {
+  console.error("Razorpay refund request error:", refundError.message);
+
+  // Provider ka result uncertain hai, isliye PENDING hi rehne do.
+  return res.status(502).json({
+    success: false,
+    message:
+      "Refund result could not be confirmed. Check Razorpay Dashboard before retrying.",
+  });
+}
+
+} catch (error) {
+console.error("Request payment refund error:", error.message);
+
+return res.status(500).json({
+  success: false,
+  message: "Failed to request payment refund",
+});
+
+}
+};
+
+
+
 module.exports = {
   createPaymentOrder,
   verifyPayment,
+  requestPaymentRefund,
 };

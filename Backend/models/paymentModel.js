@@ -5,7 +5,8 @@ const paymentSchema = new mongoose.Schema(
   {
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "BookingModel",
+      // ref: "bookingModel",
+      ref: "Booking",
       required: true,
       index: true,
     },
@@ -55,6 +56,36 @@ const paymentSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+
+    
+refundId: {
+  type: String,
+  trim: true,
+  default: null,
+},
+
+refundAmountPaise: {
+  type: Number,
+  min: 0,
+  default: 0,
+},
+
+refundStatus: {
+  type: String,
+  enum: ["NOT_REQUESTED", "PENDING", "PROCESSED", "FAILED"],
+  default: "NOT_REQUESTED",
+  index: true,
+},
+
+refundRequestedAt: {
+  type: Date,
+  default: null,
+},
+
+refundProcessedAt: {
+  type: Date,
+  default: null,
+},
 
     capturedAt: {
       type: Date,

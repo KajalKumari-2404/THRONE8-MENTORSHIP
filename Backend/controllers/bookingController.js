@@ -457,7 +457,59 @@ const disputeSessionCompletion = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, getMyBookings, getMentorBookings, requestSessionCompletion, confirmSessionCompletion, disputeSessionCompletion };
+
+
+const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (!mongoose.isValidObjectId(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid bookingId is required",
+      });
+    }
+
+    const booking = await BookingModel.findOne({
+      _id: bookingId,
+      studentId: req.user._id,
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    if (booking.status !== "PENDING_PAYMENT") {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Only bookings awaiting payment can be cancelled using this endpoint",
+      });
+    }
+
+    booking.status = "CANCELLED";
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending booking cancelled successfully",
+      bookingId: booking._id,
+      status: booking.status,
+    });
+  } catch (error) {
+    console.error("Cancel booking error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel booking",
+    });
+  }
+};
+
+module.exports = { createBooking, getMyBookings, getMentorBookings, requestSessionCompletion, confirmSessionCompletion, disputeSessionCompletion, cancelBooking };
 
 
 
