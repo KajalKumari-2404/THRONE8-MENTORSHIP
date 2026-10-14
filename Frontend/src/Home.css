@@ -1,5 +1,6 @@
 
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"); */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 .home-page {
   --home-bg: #0b0b13;
@@ -116,7 +117,8 @@
 
 .home-hero h1 {
   margin: 27px 0 20px;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(44px, 5.2vw, 70px);
   font-weight: 800;
   letter-spacing: -3.7px;
@@ -263,7 +265,8 @@
   border-radius: 15px;
   background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
   color: #171125;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 23px;
   font-weight: 800;
   letter-spacing: -2px;
@@ -280,7 +283,8 @@
 .home-center-card h2 {
   margin: 0;
   color: #fff;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 26px;
   line-height: 1.35;
   letter-spacing: -1px;
@@ -410,7 +414,8 @@
 .home-stat h3 {
   margin: 0;
   color: #f8f7ff;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 17px;
   font-weight: 800;
 }
@@ -442,7 +447,8 @@
 .home-section-heading h2,
 .home-about h2 {
   margin: 17px 0;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(33px, 4vw, 47px);
   font-weight: 800;
   letter-spacing: -2px;
@@ -515,7 +521,8 @@
 .home-feature-card h3 {
   margin: 12px 0 9px;
   color: #f8f7ff;
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 19px;
   letter-spacing: -0.5px;
 }
@@ -578,7 +585,8 @@
   display: flex;
   align-items: center;
   color: rgba(196, 181, 253, 0.15);
-  font-family: "Manrope", sans-serif;
+  /* font-family: "Manrope", sans-serif; */
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(90px, 15vw, 185px);
   font-weight: 800;
   letter-spacing: -22px;

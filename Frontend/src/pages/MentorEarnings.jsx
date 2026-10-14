@@ -25,30 +25,35 @@ export default function MentorEarnings() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchEarnings = async () => {
-    const token = sessionStorage.getItem("throne8Token");
+  const token = sessionStorage.getItem("throne8Token");
 
-    if (!token) {
-      setError("Please log in to view earnings.");
-      setLoading(false);
-      return;
-    }
+  if (!token) {
+    setError("Please log in to view earnings.");
+    setLoading(false);
+    setRefreshing(false);
+    return;
+  }
 
-    try {
-      setError("");
-      const response = await api.get("/mentor/earnings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setData(response.data);
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Unable to load mentor earnings."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setError("");
+
+    const response = await api.get("/mentor/earnings", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setData(response.data);
+  } catch (err) {
+    setError(
+      err.response?.data?.message || "Unable to load mentor earnings."
+    );
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+};
 
   useEffect(() => {
     fetchEarnings();
@@ -88,7 +93,16 @@ export default function MentorEarnings() {
           <h1>My Earnings</h1>
           <p>Track your mentorship earnings and payout status.</p>
         </div>
-        <button onClick={fetchEarnings}>Refresh</button>
+        {/* <button onClick={fetchEarnings}>Refresh</button> */}
+        <button
+  onClick={() => {
+    setRefreshing(true);
+    fetchEarnings();
+  }}
+  disabled={refreshing}
+>
+  {refreshing ? "Refreshing..." : "Refresh"}
+</button>
       </header>
 
       {error && (

@@ -11,6 +11,7 @@ const authRoutes = require("./routes/authRoutes");
 const webhookRoutes = require("./routes/webhookRoutes");
 const mentorEarningsRoutes = require("./routes/mentorEarningsRoutes");
 const adminFinanceRoutes = require("./routes/adminFinanceRoutes");
+const adminPayoutRoutes = require("./routes/adminPayoutRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
 
 const app = express();
@@ -50,11 +51,11 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/mentor/earnings", mentorEarningsRoutes);
 app.use("/api/v1/admin/finance", adminFinanceRoutes);
+app.use("/api/v1/admin", adminPayoutRoutes);
 app.use("/api/v1/mentors", mentorRoutes);
 
 app.get("/api/v1/auth/me", protect, (req, res) => {

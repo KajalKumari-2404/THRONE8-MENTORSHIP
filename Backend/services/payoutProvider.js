@@ -50,7 +50,20 @@ async function initiateTransfer({ mentorAccount, amountPaise, idempotencyKey }) 
 }
 
 async function fetchTransferStatus(providerTransferId) {
-  return { providerTransferId, status: "SUCCEEDED" };
+  if (!providerTransferId) {
+    const error = new Error("Transfer ID is required for reconciliation");
+    error.code = "TRANSFER_ID_REQUIRED";
+    throw error;
+  }
+
+  // Mock adapter cannot verify real provider status.
+  // Never assume that an unknown transfer succeeded.
+  return {
+    providerTransferId,
+    status: "UNKNOWN",
+    failureCode: null,
+    failureMessage: "Mock provider cannot verify transfer status",
+  };
 }
 
 module.exports = { initiateTransfer, fetchTransferStatus };

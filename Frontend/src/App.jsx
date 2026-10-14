@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import MentorEarnings from "./pages/MentorEarnings";
 import ProtectedRoute from "./ProtectedRoute";
+import MentorDiscovery from "./pages/MentorDiscovery";
 import {
   BrowserRouter,
   Routes,
@@ -402,6 +403,7 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
           <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/mentors" element={<MentorDiscovery />} />
             <Route path="/payment" element={<PaymentApp />} />
             <Route path="/book-session" element={<BookSession />} />
           </Route>

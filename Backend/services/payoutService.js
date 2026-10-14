@@ -1,148 +1,284 @@
+
 const mongoose = require("mongoose");
 
 const EarningModel = require("../models/earningModel");
 const PayoutModel = require("../models/payoutModel");
 const MentorAccountModel = require("../models/mentorAccountModel");
 const LedgerEntryModel = require("../models/ledgerEntryModel");
+const BookingModel = require("../models/bookingModel");
+const PaymentModel = require("../models/paymentModel");
+
 const { initiateTransfer } = require("./payoutProvider");
 const { logAudit } = require("./auditLog");
 
-/**
- * Admin-approves a single ELIGIBLE earning for payout.
- * Spec §8: lease atomically, deterministic idempotency key, never treat API
- * submission as success — only the provider's returned status decides state.
- */
-async function approvePayout({ earningId, adminId }) {
+async function validatePayoutEligibility(earning, session) {
+
+  const booking = await BookingModel.findOne({
+  _id: earning.bookingId,
+  mentorId: earning.mentorId,
+  status: "COMPLETED",
+  completedAt: { $ne: null },
+  completionRequestedAt: { $ne: null },
+  studentConfirmedAt: { $ne: null },
+  completionDisputedAt: null,
+}).session(session);
+
+if (!booking) {
+  const error = new Error(
+    "Booking must be completed, student-confirmed, and undisputed"
+  );
+  error.statusCode = 409;
+  throw error;
+}
+
+const now = new Date();
+
+if (
+  !earning.eligibleAt ||
+  earning.eligibleAt > now ||
+  earning.state !== "ELIGIBLE"
+) {
+  const error = new Error("Earning is not yet eligible for payout");
+  error.statusCode = 409;
+  throw error;
+}
+
+if (
+  !booking.payoutEligibleAt ||
+  booking.payoutEligibleAt > now
+) {
+  const error = new Error(
+    "Booking is still within the 15-day payout hold"
+  );
+  error.statusCode = 409;
+  throw error;
+}
+
+  const payment = await PaymentModel.findOne({
+    bookingId: earning.bookingId,
+    status: "CAPTURED",
+    refundStatus: "NOT_REQUESTED",
+    refundAmountPaise: 0,
+  })
+    .sort({ createdAt: -1 })
+    .session(session);
+
+  if (!payment) {
+    throw Object.assign(
+      new Error("Captured payment missing or refund is present"),
+      { statusCode: 409 }
+    );
+  }
+
+  const mentorAccount = await MentorAccountModel.findOne({
+    mentorId: earning.mentorId,
+  }).session(session);
+
+  if (
+    !mentorAccount ||
+    mentorAccount.verificationStatus !== "VERIFIED" ||
+    mentorAccount.payoutEnabled !== true
+  ) {
+    throw Object.assign(
+      new Error("Mentor account is not verified or payout-enabled"),
+      { statusCode: 409 }
+    );
+  }
+
+  if (!mentorAccount.providerAccountId) {
+    throw Object.assign(
+      new Error("Mentor has no linked payout account"),
+      { statusCode: 409 }
+    );
+  }
+
+  return mentorAccount;
+}
+
+async function settleTransfer({
+  payout,
+  earning,
+  transfer,
+  adminId,
+  action,
+}) {
   const session = await mongoose.startSession();
 
   try {
-    let leasedEarning;
-    let mentorAccount;
-    let payout;
-
     await session.withTransaction(async () => {
-      leasedEarning = await EarningModel.findOneAndUpdate(
-        { _id: earningId, state: "ELIGIBLE" },
+      const currentPayout = await PayoutModel.findOne({
+        _id: payout._id,
+        state: "INITIATED",
+      }).session(session);
+
+      const currentEarning = await EarningModel.findOne({
+        _id: earning._id,
+        state: "PROCESSING",
+      }).session(session);
+
+      if (!currentPayout || !currentEarning) {
+        throw new Error("Payout state changed; manual reconciliation required");
+      }
+
+      if (transfer.status === "SUCCEEDED") {
+        if (!transfer.providerTransferId) {
+          throw new Error(
+            "Provider returned success without a transfer ID; reconcile manually"
+          );
+        }
+
+        currentPayout.state = "SUCCEEDED";
+        currentPayout.providerTransferId = transfer.providerTransferId;
+        currentPayout.confirmedAt = new Date();
+
+        currentEarning.state = "PAID";
+        currentEarning.holdReason = null;
+
+        await LedgerEntryModel.create(
+          [
+            {
+              bookingId: currentEarning.bookingId,
+              entryType: "PAYOUT",
+              account: "MENTOR",
+              direction: "DEBIT",
+              amountPaise: currentPayout.amountPaise,
+              currency: "INR",
+              eventKey: `payout:${currentPayout._id}:settled`,
+              description: "Mentor payout settled",
+              metadata: { payoutId: currentPayout._id.toString() },
+            },
+          ],
+          { session }
+        );
+      } else if (transfer.status === "FAILED") {
+        currentPayout.state = "FAILED";
+        currentPayout.failureCode = transfer.failureCode || "TRANSFER_FAILED";
+        currentPayout.failureMessage =
+          transfer.failureMessage || "Provider reported transfer failure";
+
+        currentEarning.state = "ELIGIBLE";
+      } else {
+        // Unknown/pending status is NOT a failure.
+        // Keep INITIATED + PROCESSING until provider reconciliation.
+        return;
+      }
+
+      await currentPayout.save({ session });
+      await currentEarning.save({ session });
+
+      await logAudit(
+        {
+          actorId: adminId,
+          actorRole: "ADMIN",
+          action,
+          entityType: "PAYOUT",
+          entityId: currentPayout._id,
+          before: {
+            payoutState: "INITIATED",
+            earningState: "PROCESSING",
+          },
+          after: {
+            payoutState: currentPayout.state,
+            earningState: currentEarning.state,
+          },
+        },
+        session
+      );
+
+      payout = currentPayout;
+      earning = currentEarning;
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  return { payout, earning };
+}
+
+async function approvePayout({ earningId, adminId }) {
+  const session = await mongoose.startSession();
+
+  let payout;
+  let earning;
+  let mentorAccount;
+
+  try {
+    await session.withTransaction(async () => {
+      earning = await EarningModel.findOne({
+        _id: earningId,
+        state: "ELIGIBLE",
+      }).session(session);
+
+      if (!earning) {
+        throw Object.assign(
+          new Error("Earning is not ELIGIBLE or was already processed"),
+          { statusCode: 409 }
+        );
+      }
+
+      mentorAccount = await validatePayoutEligibility(earning, session);
+
+      const leased = await EarningModel.findOneAndUpdate(
+        { _id: earning._id, state: "ELIGIBLE" },
         { $set: { state: "PROCESSING" } },
         { new: true, session }
       );
 
-      if (!leasedEarning) {
-        const error = new Error(
-          "Earning is not ELIGIBLE (already processed, on hold, or not found)"
+      if (!leased) {
+        throw Object.assign(
+          new Error("Earning was claimed by another request"),
+          { statusCode: 409 }
         );
-        error.statusCode = 409;
-        throw error;
       }
 
-      mentorAccount = await MentorAccountModel.findOne({
-        mentorId: leasedEarning.mentorId,
-      }).session(session);
+      earning = leased;
 
-      if (
-        !mentorAccount ||
-        mentorAccount.verificationStatus !== "VERIFIED" ||
-        !mentorAccount.payoutEnabled
-      ) {
-        const error = new Error(
-          "Mentor account is not verified/payout-enabled"
-        );
-        error.statusCode = 409;
-        throw error;
-      }
-
-      const idempotencyKey = `payout:${leasedEarning._id}:attempt:1`;
+      const idempotencyKey = `payout:${earning._id}:attempt:1`;
 
       payout = await PayoutModel.create(
         [
           {
-            earningId: leasedEarning._id,
-            mentorId: leasedEarning.mentorId,
-            amountPaise: leasedEarning.payablePaise,
+            earningId: earning._id,
+            mentorId: earning.mentorId,
+            amountPaise: earning.payablePaise,
             attempt: 1,
             state: "INITIATED",
             idempotencyKey,
             initiatedAt: new Date(),
           },
         ],
-        { session, ordered: true }
+        { session }
       ).then((docs) => docs[0]);
     });
-
-    const transfer = await initiateTransfer({
-      mentorAccount,
-      amountPaise: payout.amountPaise,
-      idempotencyKey: payout.idempotencyKey,
-    });
-
-    await session.withTransaction(async () => {
-      if (transfer.status === "SUCCEEDED") {
-        payout.state = "SUCCEEDED";
-        payout.providerTransferId = transfer.providerTransferId;
-        payout.confirmedAt = new Date();
-        await payout.save({ session });
-
-        leasedEarning.state = "PAID";
-        await leasedEarning.save({ session });
-
-        await LedgerEntryModel.create(
-          [
-            {
-              bookingId: leasedEarning.bookingId,
-              entryType: "PAYOUT",
-              account: "MENTOR",
-              direction: "DEBIT",
-              amountPaise: payout.amountPaise,
-              currency: "INR",
-              eventKey: `payout:${payout._id}:settled`,
-              description: "Mentor payout settled",
-              metadata: { payoutId: payout._id.toString() },
-            },
-          ],
-          { session, ordered: true }
-        );
-      } else {
-        payout.state = "FAILED";
-        payout.failureCode = transfer.failureCode;
-        payout.failureMessage = transfer.failureMessage;
-        await payout.save({ session });
-
-        leasedEarning.state = "ELIGIBLE";
-        await leasedEarning.save({ session });
-      }
-
-      await logAudit(
-        {
-          actorId: adminId,
-          actorRole: "ADMIN",
-          action: "PAYOUT_APPROVE",
-          entityType: "PAYOUT",
-          entityId: payout._id,
-          before: { earningState: "ELIGIBLE" },
-          after: { payoutState: payout.state, earningState: leasedEarning.state },
-        },
-        session
-      );
-    });
-
-    return { payout, earning: leasedEarning };
   } finally {
     await session.endSession();
   }
+
+  // If the provider call throws/times out, leave the payout INITIATED
+  // and earning PROCESSING. Reconcile provider status before retrying.
+  const transfer = await initiateTransfer({
+    mentorAccount,
+    amountPaise: payout.amountPaise,
+    idempotencyKey: payout.idempotencyKey,
+  });
+
+  return settleTransfer({
+    payout,
+    earning,
+    transfer,
+    adminId,
+    action: "PAYOUT_APPROVE",
+  });
 }
 
-/**
- * Retries a previously FAILED payout attempt with a fresh idempotency key
- * (attempt N+1).
- */
 async function retryPayout({ payoutId, adminId }) {
   const session = await mongoose.startSession();
 
-  try {
-    let payout;
-    let earning;
-    let mentorAccount;
+  let payout;
+  let earning;
+  let mentorAccount;
 
+  try {
     await session.withTransaction(async () => {
       payout = await PayoutModel.findOne({
         _id: payoutId,
@@ -150,98 +286,75 @@ async function retryPayout({ payoutId, adminId }) {
       }).session(session);
 
       if (!payout) {
-        const error = new Error("Only a FAILED payout can be retried");
-        error.statusCode = 409;
-        throw error;
+        throw Object.assign(
+          new Error("Only a confirmed FAILED payout can be retried"),
+          { statusCode: 409 }
+        );
       }
 
-      earning = await EarningModel.findOneAndUpdate(
-        { _id: payout.earningId, state: "ELIGIBLE" },
+      earning = await EarningModel.findOne({
+        _id: payout.earningId,
+        state: "ELIGIBLE",
+      }).session(session);
+
+      if (!earning) {
+        throw Object.assign(
+          new Error("Earning is not ELIGIBLE for retry"),
+          { statusCode: 409 }
+        );
+      }
+
+      mentorAccount = await validatePayoutEligibility(earning, session);
+
+      const leased = await EarningModel.findOneAndUpdate(
+        { _id: earning._id, state: "ELIGIBLE" },
         { $set: { state: "PROCESSING" } },
         { new: true, session }
       );
 
-      if (!earning) {
-        const error = new Error(
-          "Underlying earning is no longer ELIGIBLE for retry"
+      if (!leased) {
+        throw Object.assign(
+          new Error("Earning was claimed by another request"),
+          { statusCode: 409 }
         );
-        error.statusCode = 409;
-        throw error;
       }
 
-      mentorAccount = await MentorAccountModel.findOne({
-        mentorId: payout.mentorId,
-      }).session(session);
+      earning = leased;
 
-      payout.attempt += 1;
-      payout.idempotencyKey = `payout:${earning._id}:attempt:${payout.attempt}`;
-      payout.state = "INITIATED";
-      payout.failureCode = null;
-      payout.failureMessage = null;
-      payout.initiatedAt = new Date();
-      await payout.save({ session });
+      // Preserve the failed attempt for audit history.
+      payout = await PayoutModel.create(
+        [
+          {
+            earningId: earning._id,
+            mentorId: earning.mentorId,
+            amountPaise: earning.payablePaise,
+            attempt: payout.attempt + 1,
+            state: "INITIATED",
+            idempotencyKey:
+              `payout:${earning._id}:attempt:${payout.attempt + 1}`,
+            initiatedAt: new Date(),
+          },
+        ],
+        { session }
+      ).then((docs) => docs[0]);
     });
-
-    const transfer = await initiateTransfer({
-      mentorAccount,
-      amountPaise: payout.amountPaise,
-      idempotencyKey: payout.idempotencyKey,
-    });
-
-    await session.withTransaction(async () => {
-      if (transfer.status === "SUCCEEDED") {
-        payout.state = "SUCCEEDED";
-        payout.providerTransferId = transfer.providerTransferId;
-        payout.confirmedAt = new Date();
-        await payout.save({ session });
-
-        earning.state = "PAID";
-        await earning.save({ session });
-
-        await LedgerEntryModel.create(
-          [
-            {
-              bookingId: earning.bookingId,
-              entryType: "PAYOUT",
-              account: "MENTOR",
-              direction: "DEBIT",
-              amountPaise: payout.amountPaise,
-              currency: "INR",
-              eventKey: `payout:${payout._id}:settled:attempt:${payout.attempt}`,
-              description: "Mentor payout settled (retry)",
-              metadata: { payoutId: payout._id.toString() },
-            },
-          ],
-          { session, ordered: true }
-        );
-      } else {
-        payout.state = "FAILED";
-        payout.failureCode = transfer.failureCode;
-        payout.failureMessage = transfer.failureMessage;
-        await payout.save({ session });
-
-        earning.state = "ELIGIBLE";
-        await earning.save({ session });
-      }
-
-      await logAudit(
-        {
-          actorId: adminId,
-          actorRole: "ADMIN",
-          action: "PAYOUT_RETRY",
-          entityType: "PAYOUT",
-          entityId: payout._id,
-          before: { attempt: payout.attempt - 1 },
-          after: { attempt: payout.attempt, payoutState: payout.state },
-        },
-        session
-      );
-    });
-
-    return { payout, earning };
   } finally {
     await session.endSession();
   }
+
+  const transfer = await initiateTransfer({
+    mentorAccount,
+    amountPaise: payout.amountPaise,
+    idempotencyKey: payout.idempotencyKey,
+  });
+
+  return settleTransfer({
+    payout,
+    earning,
+    transfer,
+    adminId,
+    action: "PAYOUT_RETRY",
+  });
 }
 
 module.exports = { approvePayout, retryPayout };

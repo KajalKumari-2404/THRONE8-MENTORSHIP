@@ -1,45 +1,60 @@
+
 import { useNavigate } from "react-router-dom";
 import "./App.css";
 
 export default function Navbar() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const handleLogout = () => {
-sessionStorage.removeItem("throne8Token");
-sessionStorage.removeItem("throne8User");
-navigate("/login", { replace: true });
-};
+  const handleLogout = () => {
+    sessionStorage.removeItem("throne8Token");
+    sessionStorage.removeItem("throne8User");
+    navigate("/login", { replace: true });
+  };
 
-return ( <nav className="throne-navbar">
-<div
-className="throne-navbar-brand"
-onClick={() => navigate("/")}
-role="button"
-tabIndex={0}
-onKeyDown={(e) => {
-if (e.key === "Enter") navigate("/");
-}}
-> <span className="throne-navbar-logo">T8</span> <span className="throne-navbar-name">
-THRONE<span>8</span> <small>MENTORSHIP PLATFORM</small> </span> </div>
+  const handleBrandKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      navigate("/");
+    }
+  };
 
-  <div className="throne-navbar-actions">
-    <span className="throne-navbar-status">
-      <span className="throne-status-dot" />
-      Platform Active
-    </span>
+  return (
+    <nav className="throne-navbar" aria-label="Main navigation">
+      <div
+        className="throne-navbar-brand"
+        onClick={() => navigate("/")}
+        onKeyDown={handleBrandKeyDown}
+        role="link"
+        tabIndex={0}
+        aria-label="THRONE8 home"
+      >
+        <span className="throne-navbar-logo" aria-hidden="true">
+          T8
+        </span>
 
-    <button
-      type="button"
-      className="throne-logout-button"
-      onClick={handleLogout}
-    >
-      <span aria-hidden="true">↗</span>
-      Logout
-    </button>
-  </div>
-</nav>
+        <span className="throne-navbar-name">
+          THRONE<span>8</span>
+          <small>MENTORSHIP PLATFORM</small>
+        </span>
+      </div>
 
-);
+      <div className="throne-navbar-actions">
+        <span className="throne-navbar-status">
+          <span className="throne-status-dot" aria-hidden="true" />
+          Platform Active
+        </span>
+
+        <button
+          type="button"
+          className="throne-logout-button"
+          onClick={handleLogout}
+        >
+          <span aria-hidden="true">↗</span>
+          Logout
+        </button>
+      </div>
+    </nav>
+  );
 }
 
 
@@ -70,46 +85,118 @@ THRONE<span>8</span> <small>MENTORSHIP PLATFORM</small> </span> </div>
 
 
 
-
-
 // import { useNavigate } from "react-router-dom";
+// import "./App.css";
 
 // export default function Navbar() {
-//   const navigate = useNavigate();
+// const navigate = useNavigate();
 
-//   const handleLogout = () => {
-//     sessionStorage.removeItem("throne8Token");
-//     sessionStorage.removeItem("throne8User");
-//     navigate("/login", { replace: true });
-//   };
+// const handleLogout = () => {
+// sessionStorage.removeItem("throne8Token");
+// sessionStorage.removeItem("throne8User");
+// navigate("/login", { replace: true });
+// };
 
-//   return (
-//     <nav
-//       style={{
-//         display: "flex",
-//         justifyContent: "space-between",
-//         alignItems: "center",
-//         padding: "15px 25px",
-//         background: "#25213b",
-//         color: "white",
-//       }}
+// return ( <nav className="throne-navbar">
+// <div
+// className="throne-navbar-brand"
+// onClick={() => navigate("/")}
+// role="button"
+// tabIndex={0}
+// onKeyDown={(e) => {
+// if (e.key === "Enter") navigate("/");
+// }}
+// > <span className="throne-navbar-logo">T8</span> <span className="throne-navbar-name">
+// THRONE<span>8</span> <small>MENTORSHIP PLATFORM</small> </span> </div>
+
+//   <div className="throne-navbar-actions">
+//     <span className="throne-navbar-status">
+//       <span className="throne-status-dot" />
+//       Platform Active
+//     </span>
+
+//     <button
+//       type="button"
+//       className="throne-logout-button"
+//       onClick={handleLogout}
 //     >
-//       <h2 style={{ margin: 0 }}>THRONE8</h2>
+//       <span aria-hidden="true">↗</span>
+//       Logout
+//     </button>
+//   </div>
+// </nav>
 
-//       <button
-//         onClick={handleLogout}
-//         style={{
-//           padding: "9px 18px",
-//           border: "none",
-//           borderRadius: "8px",
-//           background: "#ef4444",
-//           color: "white",
-//           cursor: "pointer",
-//           fontWeight: "bold",
-//         }}
-//       >
-//         Logout
-//       </button>
-//     </nav>
-//   );
+// );
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // import { useNavigate } from "react-router-dom";
+
+// // export default function Navbar() {
+// //   const navigate = useNavigate();
+
+// //   const handleLogout = () => {
+// //     sessionStorage.removeItem("throne8Token");
+// //     sessionStorage.removeItem("throne8User");
+// //     navigate("/login", { replace: true });
+// //   };
+
+// //   return (
+// //     <nav
+// //       style={{
+// //         display: "flex",
+// //         justifyContent: "space-between",
+// //         alignItems: "center",
+// //         padding: "15px 25px",
+// //         background: "#25213b",
+// //         color: "white",
+// //       }}
+// //     >
+// //       <h2 style={{ margin: 0 }}>THRONE8</h2>
+
+// //       <button
+// //         onClick={handleLogout}
+// //         style={{
+// //           padding: "9px 18px",
+// //           border: "none",
+// //           borderRadius: "8px",
+// //           background: "#ef4444",
+// //           color: "white",
+// //           cursor: "pointer",
+// //           fontWeight: "bold",
+// //         }}
+// //       >
+// //         Logout
+// //       </button>
+// //     </nav>
+// //   );
+// // }
