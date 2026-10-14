@@ -7,9 +7,10 @@ const money = (paise = 0) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(paise / 100);
-
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format((Number(paise) || 0) / 100);
+  
 const labels = {
   PENDING_SESSION: "Session Pending",
   HOLDING: "15-Day Hold",

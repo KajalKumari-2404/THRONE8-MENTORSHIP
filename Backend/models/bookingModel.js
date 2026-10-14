@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
@@ -64,32 +63,26 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    // completedAt: {
-    //   type: Date,
-    //   default: null,
-    // },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
 
-    
-completedAt: {
-  type: Date,
-  default: null,
-},
+    completionRequestedAt: {
+      type: Date,
+      default: null,
+    },
 
-completionRequestedAt: {
-  type: Date,
-  default: null,
-},
+    studentConfirmedAt: {
+      type: Date,
+      default: null,
+    },
 
-studentConfirmedAt: {
-  type: Date,
-  default: null,
-},
-
-completionDisputedAt: {
-  type: Date,
-  default: null,
-  index: true,
-},
+    completionDisputedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
 
     commissionRateBps: {
       type: Number,
@@ -115,9 +108,31 @@ completionDisputedAt: {
       type: Date,
       default: null,
     },
+
+    // Deterministic key so re-submitting the same booking intent
+    // never creates two gateway orders for the same slot/student.
+    idempotencyKey: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,
+  }
+);
+
+// Enforce one active (not yet paid-and-expired, not cancelled/expired) booking
+// per mentor+slot at the database level. Without this, two students racing
+// to book the same slot can both succeed before either one pays.
+bookingSchema.index(
+  { mentorId: 1, slotStart: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: ["PENDING_PAYMENT", "CONFIRMED"] },
+    },
+    name: "unique_active_slot",
   }
 );
 
