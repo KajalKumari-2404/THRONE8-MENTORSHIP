@@ -1012,3 +1012,180 @@ a:focus-visible {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13);
   }
 }
+
+
+
+
+/* Booking search and filters */
+.booking-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+
+.booking-search,
+.booking-filter {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.booking-search {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.booking-filter {
+  flex: 0 1 190px;
+  cursor: pointer;
+}
+
+.booking-search:focus,
+.booking-filter:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.16);
+}
+
+.booking-search::placeholder {
+  color: #94a3b8;
+}
+
+.booking-filter option {
+  background: #17172b;
+  color: #fff;
+}
+
+.booking-count {
+  font-size: 13px;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .booking-toolbar {
+    align-items: stretch;
+  }
+
+  .booking-search,
+  .booking-filter {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .booking-count {
+    white-space: normal;
+  }
+}
+
+
+
+/* ===== THRONE8 Dashboard Final UI Polish ===== */
+
+.booking-toolbar {
+  padding: 14px;
+  border: 1px solid #29354a;
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.8);
+}
+
+.booking-search,
+.booking-filter {
+  color: #f1f5f9;
+  background-color: #151c2c;
+}
+
+.booking-search:hover,
+.booking-filter:hover {
+  border-color: #6552b9;
+}
+
+.booking-search:focus-visible,
+.booking-filter:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.booking-count {
+  color: #c4b5fd;
+  font-weight: 700;
+}
+
+.booking-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #a78bfa, #6366f1);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.booking-card:hover::before {
+  opacity: 1;
+}
+
+.status-badge {
+  overflow-wrap: anywhere;
+}
+
+.confirm-session-button:focus-visible,
+.dispute-session-button:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+}
+
+.confirm-session-button:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.dispute-session-button:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.18);
+}
+
+.dashboard-message.empty-state {
+  border: 1px dashed #3b4255;
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.55);
+}
+
+@media (max-width: 680px) {
+  .booking-toolbar {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .booking-search,
+  .booking-filter {
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .booking-card {
+    border-radius: 15px;
+  }
+
+  .booking-card::before {
+    width: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-card::before {
+    transition: none;
+  }
+}

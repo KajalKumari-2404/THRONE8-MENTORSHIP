@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import MentorEarnings from "./pages/MentorEarnings";
 import ProtectedRoute from "./ProtectedRoute";
 import MentorDiscovery from "./pages/MentorDiscovery";
+import SessionDispute from "./pages/SessionDispute";
 import {
   BrowserRouter,
   Routes,
@@ -418,9 +419,26 @@ function App() {
               element={<MentorEarnings />}
             />
           </Route>
-        </Route>
+          </Route>           
+{/* Session Completion and Dispute: Student and Mentor */}
+<Route
+  element={
+    <ProtectedRoute allowedRoles={["STUDENT", "MENTOR"]} />
+  }
+>
+  <Route element={<ProtectedLayout />}>
+    <Route
+      path="/session-completion"
+      element={<SessionCompletion />}
+    />
 
-        {/* Admin routes */}
+    <Route
+      path="/session-dispute"
+      element={<SessionDispute />}
+    />
+  </Route>
+</Route>
+{/* Admin routes */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route element={<ProtectedLayout />}>
             <Route

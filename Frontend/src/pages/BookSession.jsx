@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
+import "./BookSession.css";
 
 export default function BookSession() {
   const navigate = useNavigate();

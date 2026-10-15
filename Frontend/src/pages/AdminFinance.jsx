@@ -97,6 +97,7 @@ export default function AdminFinance() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [paymentSearch, setPaymentSearch] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("ALL");
+  const [copiedPaymentId, setCopiedPaymentId] = useState("");
 
   const loadFinance = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -201,6 +202,19 @@ export default function AdminFinance() {
   const pendingEarnings = earnings
     .filter((item) => item._id === "PENDING_SESSION")
     .reduce((total, item) => total + Number(item.amountPaise ?? 0), 0);
+
+    const copyPaymentReference = async (reference) => {
+  try {
+    await navigator.clipboard.writeText(String(reference));
+    setCopiedPaymentId(String(reference));
+
+    window.setTimeout(() => {
+      setCopiedPaymentId("");
+    }, 1800);
+  } catch {
+    setError("Could not copy the payment reference. Please copy it manually.");
+  }
+};
 
   return (
     <main className="finance-page">
@@ -362,8 +376,8 @@ export default function AdminFinance() {
 </div>
           </div>
           <span className="finance-count">
-            {recentPayments.length} records
-          </span>
+  {filteredPayments.length} of {recentPayments.length} records
+</span>
         </div>
 
         {recentPayments.length === 0 ? (
@@ -401,8 +415,22 @@ export default function AdminFinance() {
             <span className="finance-reference-icon">₹</span>
             <div>
               <strong>
-                {payment.gatewayPaymentId || payment._id}
-              </strong>
+  {payment.gatewayPaymentId || payment._id}
+</strong>
+
+<button
+  type="button"
+  className="finance-copy-button"
+  onClick={() =>
+    copyPaymentReference(payment.gatewayPaymentId || payment._id)
+  }
+  aria-label="Copy payment reference"
+>
+  {copiedPaymentId ===
+  String(payment.gatewayPaymentId || payment._id)
+    ? "Copied!"
+    : "Copy"}
+</button>
               <small>Payment transaction</small>
             </div>
           </div>

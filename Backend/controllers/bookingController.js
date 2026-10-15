@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const BookingModel = require("../models/bookingModel");
 const MentorAccountModel = require("../models/mentorAccountModel");

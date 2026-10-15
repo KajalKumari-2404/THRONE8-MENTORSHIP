@@ -1,4 +1,3 @@
-
 const PaymentModel = require("../models/paymentModel");
 const BookingModel = require("../models/bookingModel");
 const EarningModel = require("../models/earningModel");

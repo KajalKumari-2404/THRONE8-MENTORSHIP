@@ -46,6 +46,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const user = (() => {
     try {
@@ -189,6 +191,28 @@ export default function Dashboard() {
   const disputed = bookings.filter(
     (booking) => booking.status === "DISPUTED"
   ).length;
+
+  const filteredBookings = bookings.filter((booking) => {
+  const person = getPerson(booking, isMentor);
+
+  const searchText = [
+    person?.name || "",
+    person?.email || "",
+    booking.status || "",
+    booking._id || "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const matchesSearch = searchText.includes(
+    searchTerm.trim().toLowerCase()
+  );
+
+  const matchesStatus =
+    statusFilter === "ALL" || booking.status === statusFilter;
+
+  return matchesSearch && matchesStatus;
+});
 
   const stats = isMentor
     ? [
@@ -387,12 +411,59 @@ export default function Dashboard() {
           )}
 
           {!loading && !error && bookings.length > 0 && (
-            <div className="booking-list">
-              {bookings.map((booking) => {
-                const person = getPerson(booking, isMentor);
+  <div className="booking-toolbar">
+    <input
+      type="search"
+      className="booking-search"
+      placeholder="Search by name, email or booking ID..."
+      value={searchTerm}
+      onChange={(event) => setSearchTerm(event.target.value)}
+      aria-label="Search bookings"
+    />
 
-                const personName =
-                  person?.name || (isMentor ? "Student" : "Mentor");
+    <select
+      className="booking-filter"
+      value={statusFilter}
+      onChange={(event) => setStatusFilter(event.target.value)}
+      aria-label="Filter bookings by status"
+    >
+      <option value="ALL">All bookings</option>
+      <option value="PENDING_PAYMENT">Payment pending</option>
+      <option value="CONFIRMED">Confirmed</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="DISPUTED">Under dispute</option>
+      <option value="CANCELLED">Cancelled</option>
+      <option value="EXPIRED">Expired</option>
+    </select>
+
+    <span className="booking-count">
+      {filteredBookings.length} of {bookings.length} bookings
+    </span>
+  </div>
+)}
+
+          {!loading && !error && bookings.length > 0 && (
+            <div className="booking-list">
+              {filteredBookings.length === 0 && (
+  <div className="dashboard-message empty-state">
+    <h3>No matching bookings</h3>
+    <p>Try another search term or select a different status.</p>
+    <button
+      type="button"
+      className="secondary-button"
+      onClick={() => {
+        setSearchTerm("");
+        setStatusFilter("ALL");
+      }}
+    >
+      Clear filters
+    </button>
+  </div>
+)}
+{filteredBookings.map((booking) => {
+  const person = getPerson(booking, isMentor);
+  const personName =
+  person?.name || (isMentor ? "Student" : "Mentor");
 
                 const initials =
                   personName.trim().charAt(0).toUpperCase() || "T";
