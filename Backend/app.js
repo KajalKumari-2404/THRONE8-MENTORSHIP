@@ -13,6 +13,7 @@ const mentorEarningsRoutes = require("./routes/mentorEarningsRoutes");
 const adminFinanceRoutes = require("./routes/adminFinanceRoutes");
 const adminPayoutRoutes = require("./routes/adminPayoutRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
+const adminRefundRoutes = require("./routes/adminRefundRoutes");
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use("/api/v1/mentor/earnings", mentorEarningsRoutes);
 app.use("/api/v1/admin/finance", adminFinanceRoutes);
 app.use("/api/v1/admin", adminPayoutRoutes);
 app.use("/api/v1/mentors", mentorRoutes);
+app.use("/api/v1/admin/refunds", adminRefundRoutes);
 
 app.get("/api/v1/auth/me", protect, (req, res) => {
   res.status(200).json({

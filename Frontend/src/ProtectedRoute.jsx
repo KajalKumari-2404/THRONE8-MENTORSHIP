@@ -1,4 +1,3 @@
-
 import { Navigate, Outlet } from "react-router-dom";
 
 export default function ProtectedRoute({ allowedRoles }) {
@@ -30,13 +29,8 @@ export default function ProtectedRoute({ allowedRoles }) {
     const role = user.role.toUpperCase();
 
     if (role === "ADMIN") {
-      return <Navigate to="/admin/finance" replace />;
+      return <Navigate to="/admin" replace />;
     }
-
-    // if (role === "MENTOR") {
-    //   return <Navigate to="/mentor/earnings" replace />;
-    // }
-
     if (role === "MENTOR") {
   return <Navigate to="/mentor/dashboard" replace />;
 }
@@ -46,64 +40,3 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   return <Outlet />;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { Navigate, Outlet } from "react-router-dom";
-
-// export default function ProtectedRoute() {
-// const token = sessionStorage.getItem("throne8Token");
-
-// if (!token) {
-// return <Navigate to="/login" replace />;
-// }
-
-// return <Outlet />;
-// }

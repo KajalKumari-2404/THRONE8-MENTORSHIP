@@ -28,11 +28,6 @@ try {
   const response = await api.post("/auth/login", form);
   const { token, user } = response.data;
 
-//   sessionStorage.setItem("throne8Token", token);
-//   sessionStorage.setItem("throne8User", JSON.stringify(user));
-
-//   navigate("/dashboard");
-
 if (!token) {
   throw new Error("Login response did not contain a token.");
 }
@@ -43,12 +38,9 @@ sessionStorage.setItem("throne8User", JSON.stringify(user));
 console.log("Token saved:", Boolean(sessionStorage.getItem("throne8Token")));
 console.log("Logged-in role:", user?.role);
 
-// navigate("/mentor/earnings");
-// navigate("/dashboard");
+
 if (user?.role?.toUpperCase() === "ADMIN") {
-  navigate("/admin/finance");
-// } else if (user?.role?.toUpperCase() === "MENTOR") {
-//   navigate("/mentor/earnings");
+  navigate("/admin");
 
 } else if (user?.role?.toUpperCase() === "MENTOR") {
   // navigate("/dashboard");

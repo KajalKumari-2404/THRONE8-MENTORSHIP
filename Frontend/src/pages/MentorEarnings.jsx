@@ -190,7 +190,10 @@ export default function MentorEarnings() {
 
         <button
           type="button"
-          onClick={fetchEarnings}
+         onClick={() => {
+  setRefreshing(true);
+  fetchEarnings();
+}}
           disabled={refreshing}
         >
           {refreshing ? "Refreshing..." : "↻ Refresh"}

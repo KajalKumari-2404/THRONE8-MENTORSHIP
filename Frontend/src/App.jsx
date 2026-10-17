@@ -11,6 +11,10 @@ import MentorEarnings from "./pages/MentorEarnings";
 import ProtectedRoute from "./ProtectedRoute";
 import MentorDiscovery from "./pages/MentorDiscovery";
 import SessionDispute from "./pages/SessionDispute";
+import AdminDashboard from "./pages/AdminDashboard";
+import MentorManagement from "./pages/MentorManagement";
+import PayoutManagement from "./pages/PayoutManagement";
+import AdminRefunds from "./pages/AdminRefunds";
 import {
   BrowserRouter,
   Routes,
@@ -38,12 +42,10 @@ function PaymentApp() {
   const location = useLocation();
 
   const [bookingId, setBookingId] = useState(
-    location.state?.bookingId || ""
-  );
+  location.state?.bookingId || ""
+);
 
-  const [token, setToken] = useState(
-    sessionStorage.getItem("throne8Token") || ""
-  );
+const token = sessionStorage.getItem("throne8Token") || "";
 
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("idle");
@@ -54,12 +56,19 @@ function PaymentApp() {
   const [activeScreen, setActiveScreen] = useState("payment");
 
   const handlePayment = async () => {
-    if (!bookingId.trim() || !token.trim()) {
-      setStatus("error");
-      setMessage("Please enter both Booking ID and Student Token.");
-      return;
-    }
+    if (!bookingId.trim()) {
+  setStatus("error");
+  setMessage(
+    "Booking ID is missing. Please open payment from your booking."
+  );
+  return;
+}
 
+if (!token) {
+  setStatus("error");
+  setMessage("Your login session has expired. Please log in again.");
+  return;
+}
     if (!window.Razorpay) {
       setStatus("error");
       setMessage(
@@ -260,16 +269,13 @@ function PaymentApp() {
             required
           />
 
-          <label htmlFor="token">Student Login Token</label>
-          <input
-            id="token"
-            type="password"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            placeholder="Paste your login token"
-            autoComplete="off"
-            required
-          />
+          <div className="payment-account-info">
+  <span className="payment-account-dot" />
+  <div>
+    <strong>Student account authenticated</strong>
+    <p>Your login session will be used securely.</p>
+  </div>
+</div>
 
           <button type="submit" disabled={loading}>
             {loading ? "Please wait..." : "Pay Now — Test Mode"}
@@ -438,15 +444,18 @@ function App() {
     />
   </Route>
 </Route>
-{/* Admin routes */}
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route element={<ProtectedLayout />}>
-            <Route
-              path="/admin/finance"
-              element={<AdminFinance />}
-            />
-          </Route>
-        </Route>
+
+{/* admin route */}
+<Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+  <Route element={<ProtectedLayout />}>
+    <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/admin/finance" element={<AdminFinance />} />
+    <Route path="/admin/mentors" element={<MentorManagement />} />
+    <Route path="/admin/payouts" element={<PayoutManagement />} />
+    <Route path="/admin/refunds" element={<AdminRefunds />} />
+  </Route>
+</Route>
+
 
         {/* Unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />

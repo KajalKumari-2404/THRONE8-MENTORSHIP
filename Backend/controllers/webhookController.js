@@ -1,20 +1,19 @@
 
 const crypto = require("node:crypto");
-
 const WebhookEventModel = require("../models/webhookEventModel");
 const { processCapturedPayment } = require("../services/processCapturedPayment");
+const { processRefundWebhook } = require("../services/processRefundWebhook");
 
 const handleRazorpayWebhook = async (req, res) => {
-  let eventId;
+  let eventRecord;
 
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers["x-razorpay-signature"];
-    eventId = req.headers["x-razorpay-event-id"];
+    const eventId = req.headers["x-razorpay-event-id"];
 
     if (!webhookSecret) {
-      console.error("RAZORPAY_WEBHOOK_SECRET is not configured");
-
+      console.error("RAZORPAY_WEBHOOK_SECRET is missing");
       return res.status(500).json({
         success: false,
         message: "Webhook configuration error",
@@ -33,7 +32,6 @@ const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    // Verify Razorpay signature against the original raw request body.
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
       .update(req.body)
@@ -43,9 +41,9 @@ const handleRazorpayWebhook = async (req, res) => {
     const expected = Buffer.from(expectedSignature, "hex");
 
     if (
+      !/^[a-f0-9]{64}$/i.test(signature) ||
       received.length !== expected.length ||
-      !crypto.timingSafeEqual(received, expected) ||
-      !/^[a-f0-9]{64}$/i.test(signature)
+      !crypto.timingSafeEqual(received, expected)
     ) {
       return res.status(400).json({
         success: false,
@@ -60,7 +58,7 @@ const handleRazorpayWebhook = async (req, res) => {
     } catch {
       return res.status(400).json({
         success: false,
-        message: "Invalid JSON payload",
+        message: "Invalid webhook JSON",
       });
     }
 
@@ -69,12 +67,9 @@ const handleRazorpayWebhook = async (req, res) => {
     if (!eventType) {
       return res.status(400).json({
         success: false,
-        message: "Missing event type",
+        message: "Webhook event type is missing",
       });
     }
-
-    // Claim the event using the unique gateway + event ID index.
-    let eventRecord;
 
     try {
       eventRecord = await WebhookEventModel.create({
@@ -98,22 +93,16 @@ const handleRazorpayWebhook = async (req, res) => {
         throw error;
       }
 
-      if (eventRecord.status === "PROCESSED") {
+      if (
+        eventRecord.status === "PROCESSED" ||
+        eventRecord.status === "PROCESSING"
+      ) {
         return res.status(200).json({
           success: true,
-          message: "Webhook already processed",
+          message: "Webhook already received",
         });
       }
 
-      // Avoid two deliveries processing the same event concurrently.
-      if (eventRecord.status === "PROCESSING") {
-        return res.status(200).json({
-          success: true,
-          message: "Webhook is already being processed",
-        });
-      }
-
-      // Retry an event previously marked FAILED.
       const retry = await WebhookEventModel.updateOne(
         {
           _id: eventRecord._id,
@@ -124,7 +113,9 @@ const handleRazorpayWebhook = async (req, res) => {
             status: "PROCESSING",
             lastError: null,
           },
-          $inc: { attempts: 1 },
+          $inc: {
+            attempts: 1,
+          },
         }
       );
 
@@ -140,10 +131,7 @@ const handleRazorpayWebhook = async (req, res) => {
 
     try {
       if (["payment.captured", "order.paid"].includes(eventType)) {
-        const paymentEntity =
-          eventType === "payment.captured"
-            ? payload.payload?.payment?.entity
-            : payload.payload?.payment?.entity;
+        const paymentEntity = payload.payload?.payment?.entity;
 
         if (
           !paymentEntity ||
@@ -161,10 +149,23 @@ const handleRazorpayWebhook = async (req, res) => {
           providerStatus: paymentEntity.status,
           source: `webhook:${eventType}`,
         });
+      } else if (
+        ["refund.created", "refund.processed", "refund.failed"].includes(
+          eventType
+        )
+      ) {
+        const refundEntity = payload.payload?.refund?.entity;
+
+        if (!refundEntity) {
+          throw new Error("Refund webhook data is missing");
+        }
+
+        await processRefundWebhook({
+          eventType,
+          refundEntity,
+        });
       }
 
-      // Other configured event types are acknowledged and recorded.
-      // Payment failure/refund accounting should be implemented separately.
       await WebhookEventModel.updateOne(
         { _id: eventRecord._id },
         {
@@ -186,7 +187,7 @@ const handleRazorpayWebhook = async (req, res) => {
         {
           $set: {
             status: "FAILED",
-            lastError: processingError.message.slice(0, 1000),
+            lastError: String(processingError.message).slice(0, 1000),
           },
         }
       );

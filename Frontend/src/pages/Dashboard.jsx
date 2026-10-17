@@ -214,6 +214,29 @@ export default function Dashboard() {
   return matchesSearch && matchesStatus;
 });
 
+
+const sortedBookings = [...filteredBookings].sort((a, b) => {
+  const aDate = new Date(a.slotStart || 0).getTime();
+  const bDate = new Date(b.slotStart || 0).getTime();
+
+  const aCompleted = a.status === "COMPLETED";
+  const bCompleted = b.status === "COMPLETED";
+
+  // Upcoming/non-completed sessions first
+  if (aCompleted !== bCompleted) {
+    return aCompleted ? 1 : -1;
+  }
+
+  // Upcoming sessions: earliest first
+  // Completed sessions: latest first
+  if (aCompleted && bCompleted) {
+    return bDate - aDate;
+  }
+
+  return aDate - bDate;
+});
+
+
   const stats = isMentor
     ? [
         {
@@ -460,7 +483,7 @@ export default function Dashboard() {
     </button>
   </div>
 )}
-{filteredBookings.map((booking) => {
+{sortedBookings.map((booking) => {
   const person = getPerson(booking, isMentor);
   const personName =
   person?.name || (isMentor ? "Student" : "Mentor");
@@ -469,138 +492,139 @@ export default function Dashboard() {
                   personName.trim().charAt(0).toUpperCase() || "T";
 
                 const isActionLoading =
-                  actionLoading === booking._id;
+                  actionLoading === booking._id; 
+                  
+                  
+return (
+  <article
+    className={`booking-card ${
+      booking.status === "PENDING_PAYMENT" ? "booking-card-pending" : ""
+    }`}
+    key={booking._id}
+  >
+    <div className="booking-main">
+      <div className="mentor-avatar">{initials}</div>
 
-                return (
-                  <article className="booking-card" key={booking._id}>
-                    <div className="booking-main">
-                      <div className="mentor-avatar">{initials}</div>
+      <div className="booking-person">
+        <h3>{personName}</h3>
+        <p>{person?.email || "Account details unavailable"}</p>
 
-                      <div className="booking-person">
-                        <h3>{personName}</h3>
-                        <p>
-                          {person?.email || "Account details unavailable"}
-                        </p>
-                        <span className="booking-date">
-                          ◷ {formatDate(booking.slotStart)}
-                        </span>
-                      </div>
-                    </div>
+        <span className="booking-date">
+          ◷ {formatDate(booking.slotStart)}
+        </span>
+      </div>
+    </div>
 
-                    <div className="booking-details">
-                      <span className="detail-label">Session ends</span>
-                      <strong>{formatDate(booking.slotEnd)}</strong>
-                    </div>
+    <div className="booking-details">
+      <span className="detail-label">Session ends</span>
+      <strong>{formatDate(booking.slotEnd)}</strong>
+    </div>
 
-                    <div className="booking-details">
-                      <span className="detail-label">Booking amount</span>
-                      <strong>{formatMoney(booking.pricePaise)}</strong>
-                    </div>
+    <div className="booking-details booking-amount">
+      <span className="detail-label">Booking amount</span>
+      <strong>{formatMoney(booking.pricePaise)}</strong>
+    </div>
 
-                    <div className="booking-status">
-                      <span
-                        className={`status-badge status-${(
-                          booking.status || "unknown"
-                        ).toLowerCase()}`}
-                      >
-                        {statusLabel(booking.status)}
-                      </span>
+    <div className="booking-status">
+      <span
+        className={`status-badge status-${(
+          booking.status || "unknown"
+        ).toLowerCase()}`}
+      >
+        {booking.status === "PENDING_PAYMENT" && (
+          <span aria-hidden="true">◷ </span>
+        )}
+        {statusLabel(booking.status)}
+      </span>
 
-                      {!isMentor &&
-                        booking.status === "PENDING_PAYMENT" && (
-                          <div className="completion-actions">
-                            <button
-                              type="button"
-                              className="confirm-session-button"
-                              onClick={() =>
-                                navigate("/payment", {
-                                  state: { bookingId: booking._id },
-                                })
-                              }
-                            >
-                              Pay Now →
-                            </button>
-                          </div>
-                        )}
+      {!isMentor && booking.status === "PENDING_PAYMENT" && (
+        <div className="completion-actions">
+          <p className="pending-payment-hint">
+            Complete your payment to confirm this session.
+          </p>
 
-                      {booking.status === "COMPLETED" &&
-                        booking.payoutEligibleAt && (
-                          <small>
-                            Payout eligibility:{" "}
-                            {formatDate(booking.payoutEligibleAt)}
-                          </small>
-                        )}
+          <button
+            type="button"
+            className="confirm-session-button pending-pay-button"
+            onClick={() =>
+              navigate("/payment", {
+                state: { bookingId: booking._id },
+              })
+            }
+          >
+            Pay Now <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      )}
 
-                      {isMentor &&
-                        booking.status === "CONFIRMED" &&
-                        !booking.completionRequestedAt &&
-                        !booking.studentConfirmedAt &&
-                        !booking.completionDisputedAt && (
-                          <div className="completion-actions">
-                            <button
-                              type="button"
-                              className="confirm-session-button"
-                              disabled={isActionLoading}
-                              onClick={() =>
-                                requestCompletion(booking._id)
-                              }
-                            >
-                              {isActionLoading
-                                ? "Please wait..."
-                                : "Request Session Completion"}
-                            </button>
-                          </div>
-                        )}
+      {booking.status === "COMPLETED" &&
+        booking.payoutEligibleAt && (
+          <small>
+            Payout eligibility: {formatDate(booking.payoutEligibleAt)}
+          </small>
+        )}
 
-                      {!isMentor &&
-                        booking.status === "CONFIRMED" &&
-                        booking.completionRequestedAt &&
-                        !booking.studentConfirmedAt &&
-                        !booking.completionDisputedAt && (
-                          <div className="completion-actions">
-                            <small>
-                              Your mentor requested completion. Confirm
-                              only if the session actually took place.
-                            </small>
+      {isMentor &&
+        booking.status === "CONFIRMED" &&
+        !booking.completionRequestedAt &&
+        !booking.studentConfirmedAt &&
+        !booking.completionDisputedAt && (
+          <div className="completion-actions">
+            <button
+              type="button"
+              className="confirm-session-button"
+              disabled={isActionLoading}
+              onClick={() => requestCompletion(booking._id)}
+            >
+              {isActionLoading
+                ? "Please wait..."
+                : "Request Session Completion"}
+            </button>
+          </div>
+        )}
 
-                            <button
-                              type="button"
-                              className="confirm-session-button"
-                              disabled={isActionLoading}
-                              onClick={() => confirmSession(booking._id)}
-                            >
-                              {isActionLoading
-                                ? "Please wait..."
-                                : "Confirm Session"}
-                            </button>
+      {!isMentor &&
+        booking.status === "CONFIRMED" &&
+        booking.completionRequestedAt &&
+        !booking.studentConfirmedAt &&
+        !booking.completionDisputedAt && (
+          <div className="completion-actions">
+            <small>
+              Your mentor requested completion. Confirm only if the
+              session actually took place.
+            </small>
 
-                            <button
-                              type="button"
-                              className="dispute-session-button"
-                              disabled={isActionLoading}
-                              onClick={() => disputeSession(booking._id)}
-                            >
-                              {isActionLoading
-                                ? "Please wait..."
-                                : "Raise Dispute"}
-                            </button>
-                          </div>
-                        )}
+            <button
+              type="button"
+              className="confirm-session-button"
+              disabled={isActionLoading}
+              onClick={() => confirmSession(booking._id)}
+            >
+              {isActionLoading ? "Please wait..." : "Confirm Session"}
+            </button>
 
-                      {booking.studentConfirmedAt && (
-                        <small>
-                          Student confirmed session completion.
-                        </small>
-                      )}
+            <button
+              type="button"
+              className="dispute-session-button"
+              disabled={isActionLoading}
+              onClick={() => disputeSession(booking._id)}
+            >
+              {isActionLoading ? "Please wait..." : "Raise Dispute"}
+            </button>
+          </div>
+        )}
 
-                      {booking.completionDisputedAt && (
-                        <small>
-                          Session completion is under dispute.
-                        </small>
-                      )}
-                    </div>
-                  </article>
-                );
+      {booking.studentConfirmedAt && (
+        <small>Student confirmed session completion.</small>
+      )}
+
+      {booking.completionDisputedAt && (
+        <small>Session completion is under dispute.</small>
+      )}
+    </div>
+  </article>
+);      
+                   
               })}
             </div>
           )}
