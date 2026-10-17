@@ -34,6 +34,14 @@ const adminModules = [
     tag: "RESOLUTION",
     number: "04",
   },
+  {
+    title: "Contact Messages",
+    description: "Review user questions and manage support requests.",
+    icon: "✉",
+    path: "/admin/contact-messages",
+    tag: "SUPPORT",
+    number: "05",
+  },
 ];
 
 export default function AdminDashboard() {
@@ -85,7 +93,8 @@ export default function AdminDashboard() {
             <h2>Management modules</h2>
             <p>Choose a module to manage the platform.</p>
           </div>
-          <span className="admin-home-module-count">04 MODULES</span>
+          {/* <span className="admin-home-module-count">04 MODULES</span> */}
+          <span className="admin-home-module-count">05 MODULES</span>
         </div>
 
         <div className="admin-module-grid">

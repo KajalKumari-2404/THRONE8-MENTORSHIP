@@ -15,6 +15,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import MentorManagement from "./pages/MentorManagement";
 import PayoutManagement from "./pages/PayoutManagement";
 import AdminRefunds from "./pages/AdminRefunds";
+import InfoPages from "./pages/InfoPages";
+import AdminContactMessages from "./pages/AdminContactMessages";
 import {
   BrowserRouter,
   Routes,
@@ -406,6 +408,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        <Route path="/about" element={<InfoPages />} />
+<Route path="/contact" element={<InfoPages />} />
+<Route path="/faq" element={<InfoPages />} />
+
         {/* Student routes */}
         <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
           <Route element={<ProtectedLayout />}>
@@ -453,6 +459,10 @@ function App() {
     <Route path="/admin/mentors" element={<MentorManagement />} />
     <Route path="/admin/payouts" element={<PayoutManagement />} />
     <Route path="/admin/refunds" element={<AdminRefunds />} />
+    <Route
+  path="/admin/contact-messages"
+  element={<AdminContactMessages />}
+/>
   </Route>
 </Route>
 
