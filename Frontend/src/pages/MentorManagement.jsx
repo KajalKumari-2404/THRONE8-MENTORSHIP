@@ -45,36 +45,25 @@ export default function MentorManagement() {
       console.log("Mentor account API data:", list);
       setAccounts(list);
 
-      setCommissionInputs((previous) => {
-        const next = { ...previous };
+      
+setCommissionInputs((previous) => {
+  const next = { ...previous };
 
-        list.forEach((account) => {
-          const id = account.mentorId?._id || account.mentorId;
-          if (!id) return;
+  list.forEach((account) => {
+    const id = account.mentorId?._id || account.mentorId;
+    if (!id) return;
 
-//          if (next[id] === undefined) {
-//   next[id] = Number(account.commissionRateBps ?? 2000) / 100;
-// }
+    if (next[id] === undefined || next[id] === "") {
+      next[id] = String(
+        Number(account.commissionRateBps ?? 2000) / 100
+      );
+    }
+  });
 
-if (next[id] === undefined) {
-  const rate =
-    account.commissionRateBps ??
-    account.commissionBps ??
-    account.commissionRate ??
-    2000;
+  return next;
+});
 
-  next[id] = Number(rate) / (
-    account.commissionRate !== undefined &&
-    account.commissionRateBps === undefined &&
-    account.commissionBps === undefined
-      ? 1
-      : 100
-  );
-}
-        });
-
-        return next;
-      });
+   
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -272,7 +261,8 @@ if (next[id] === undefined) {
                       </td>
                       {/* <td>{formatDate(account.createdAt)}</td> */}
                       {/* <td>{account.createdAt ? new Date(account.createdAt).toLocaleDateString("en-IN") : "Date unavailable"}</td> */}
-                      <td>{formatDate(account.createdAt)}</td>
+                      {/* <td>{formatDate(account.createdAt)}</td> */}
+                      <td>{formatDate(account.createdAt || account.updatedAt)}</td>
                       <td>
                         <button
                           type="button"

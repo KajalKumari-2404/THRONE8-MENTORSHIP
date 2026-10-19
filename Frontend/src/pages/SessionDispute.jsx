@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 
-const API_URL = "http://localhost:5000/api/v1";
+// const API_URL = "http://localhost:5000/api/v1";
+const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
 
 export default function SessionDispute() {
   const navigate = useNavigate();

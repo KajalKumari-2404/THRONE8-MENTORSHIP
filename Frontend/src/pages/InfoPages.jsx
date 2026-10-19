@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const API_URL = "http://localhost:5000/api/v1/contact";
+// const API_URL = "http://localhost:5000/api/v1/contact";
+const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1/contact";
 
 const faqs = [
   {

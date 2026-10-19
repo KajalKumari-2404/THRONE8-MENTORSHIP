@@ -173,7 +173,12 @@ const response = await api.get("/admin/payouts", {
                       </span>
                     </td>
 
-                    <td>{earning.bookingId || "—"}</td>
+                    {/* <td>{earning.bookingId || "—"}</td> */}
+                    <td>
+  {typeof earning.bookingId === "object"
+    ? earning.bookingId?._id || "—"
+    : earning.bookingId || "—"}
+</td>
 
                     {/* <td>{formatINR(earning.mentorGrossPaise)}</td> */}
                     <td>{formatINR(earning.payablePaise)}</td>
@@ -181,9 +186,16 @@ const response = await api.get("/admin/payouts", {
                     <td>{formatINR(earning.commissionPaise)}</td>
 
                     <td>
-                      <span className="admin-status">
+                      {/* <span className="admin-status">
                         {earning.state || "UNKNOWN"}
-                      </span>
+                      </span> */}
+                      <span
+  className={`admin-status admin-status-${String(
+    earning.state || "UNKNOWN"
+  ).toLowerCase()}`}
+>
+  {String(earning.state || "UNKNOWN").replaceAll("_", " ")}
+</span>
                     </td>
 
                     <td>

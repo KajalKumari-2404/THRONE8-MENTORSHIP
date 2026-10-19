@@ -17,6 +17,8 @@ import PayoutManagement from "./pages/PayoutManagement";
 import AdminRefunds from "./pages/AdminRefunds";
 import InfoPages from "./pages/InfoPages";
 import AdminContactMessages from "./pages/AdminContactMessages";
+import AdminBookings from "./pages/AdminBookings";
+import AdminUsers from "./pages/AdminUsers";
 import {
   BrowserRouter,
   Routes,
@@ -30,7 +32,8 @@ import AdminFinance from "./pages/AdminFinance";
 import Navbar from "./Navbar";
 import BookSession from "./pages/BookSession";
 
-const API_URL = "http://localhost:5000/api/v1";
+// const API_URL = "http://localhost:5000/api/v1";
+const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
 
 const formatINR = (paise = 0) =>
   new Intl.NumberFormat("en-IN", {
@@ -455,6 +458,8 @@ function App() {
 <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
   <Route element={<ProtectedLayout />}>
     <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/admin/bookings" element={<AdminBookings />} />
+    <Route path="/admin/users" element={<AdminUsers />} />
     <Route path="/admin/finance" element={<AdminFinance />} />
     <Route path="/admin/mentors" element={<MentorManagement />} />
     <Route path="/admin/payouts" element={<PayoutManagement />} />

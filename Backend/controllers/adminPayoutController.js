@@ -77,10 +77,16 @@ const approvePayoutHandler = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      // message:
+      //   payout.state === "SUCCEEDED"
+      //     ? "Payout settled successfully"
+      //     : "Payout attempt failed; it can be retried",
       message:
-        payout.state === "SUCCEEDED"
-          ? "Payout settled successfully"
-          : "Payout attempt failed; it can be retried",
+  payout.state === "SUCCEEDED"
+    ? "Payout settled successfully"
+    : payout.state === "FAILED"
+      ? "Payout attempt failed; review before retrying"
+      : "Payout status is pending or unconfirmed; reconcile before retrying",
       payout,
       earningState: earning.state,
     });
@@ -108,10 +114,16 @@ const retryPayoutHandler = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      // message:
+      //   payout.state === "SUCCEEDED"
+      //     ? "Retry succeeded; payout settled"
+      //     : "Retry failed again; check failureMessage",
       message:
-        payout.state === "SUCCEEDED"
-          ? "Retry succeeded; payout settled"
-          : "Retry failed again; check failureMessage",
+  payout.state === "SUCCEEDED"
+    ? "Retry succeeded; payout settled"
+    : payout.state === "FAILED"
+      ? "Retry failed; review failure details before another attempt"
+      : "Payout status is pending or unconfirmed; reconcile before retrying",
       payout,
       earningState: earning.state,
     });

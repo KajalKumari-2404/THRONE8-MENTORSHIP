@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "../App.css";
+// import { useNavigate } from "react-router-dom";
 
 const adminModules = [
   {
@@ -41,6 +42,15 @@ const adminModules = [
     path: "/admin/contact-messages",
     tag: "SUPPORT",
     number: "05",
+  },
+    {
+    title: "All Bookings",
+    description:
+      "View student sessions, mentor details, booking status and payment breakdowns.",
+    icon: "▤",
+    path: "/admin/bookings",
+    tag: "SESSIONS",
+    number: "06",
   },
 ];
 
@@ -94,7 +104,8 @@ export default function AdminDashboard() {
             <p>Choose a module to manage the platform.</p>
           </div>
           {/* <span className="admin-home-module-count">04 MODULES</span> */}
-          <span className="admin-home-module-count">05 MODULES</span>
+          {/* <span className="admin-home-module-count">05 MODULES</span> */}
+          <span className="admin-home-module-count">06 MODULES</span>
         </div>
 
         <div className="admin-module-grid">

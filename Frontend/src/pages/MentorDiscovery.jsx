@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MentorDiscovery.css";
 
-const API_URL = "http://localhost:5000/api/v1";
+// const API_URL = "http://localhost:5000/api/v1";
+const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
 
 function formatINR(paise) {
   if (paise == null) return "Price shown during booking";
