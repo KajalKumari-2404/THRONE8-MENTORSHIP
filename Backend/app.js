@@ -16,6 +16,8 @@ const mentorRoutes = require("./routes/mentorRoutes");
 const adminRefundRoutes = require("./routes/adminRefundRoutes");
 const adminContactRoutes = require("./routes/adminContactRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const adminBookingRoutes = require("./routes/adminBookingRoutes");
+const adminUserRoutes = require("./routes/adminUserRoutes");
 
 const app = express();
 
@@ -62,6 +64,8 @@ app.use("/api/v1/admin", adminPayoutRoutes);
 app.use("/api/v1/mentors", mentorRoutes);
 app.use("/api/v1/admin/refunds", adminRefundRoutes);
 app.use("/api/v1/admin", adminContactRoutes);
+app.use("/api/v1/admin/bookings", adminBookingRoutes);
+app.use("/api/v1/admin", adminUserRoutes);
 app.use("/api/v1/contact", contactRoutes);
 
 app.get("/api/v1/auth/me", protect, (req, res) => {

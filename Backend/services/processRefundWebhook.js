@@ -40,9 +40,21 @@ async function processRefundWebhook({ eventType, refundEntity }) {
 
       let payment;
 
+      
       if (refund) {
-        payment = await PaymentModel.findById(refund.paymentId).session(session);
+        if (refund.paymentId) {
+          payment = await PaymentModel.findById(refund.paymentId).session(
+            session
+          );
+        }
+
+        if (!payment && refundEntity.payment_id) {
+          payment = await PaymentModel.findOne({
+            gatewayPaymentId: refundEntity.payment_id,
+          }).session(session);
+        }
       } else {
+
         payment = await PaymentModel.findOne({
           gatewayPaymentId: refundEntity.payment_id,
           refundStatus: { $in: ["PENDING", "NOT_REQUESTED"] },
@@ -68,13 +80,22 @@ async function processRefundWebhook({ eventType, refundEntity }) {
         throw new Error("Refund payment ID does not match local payment");
       }
 
-      if (
-        Number.isFinite(refundEntity.amount) &&
+            if (
+        !Number.isSafeInteger(refundEntity.amount) ||
+        refundEntity.amount <= 0 ||
+        !Number.isSafeInteger(refund.amountPaise) ||
+        refund.amountPaise <= 0 ||
         refundEntity.amount !== refund.amountPaise
       ) {
         throw new Error(
-          "Refund amount mismatch; automatic reconciliation stopped"
+          "Refund amount is missing, invalid, or does not match the local refund"
         );
+      }
+
+            // Repair a missing payment link only after validation.
+      if (!refund.paymentId) {
+        refund.paymentId = payment._id;
+        await refund.save({ session });
       }
 
       // Idempotency: do not write refund ledger entries twice.
