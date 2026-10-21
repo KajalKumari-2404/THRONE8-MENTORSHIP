@@ -48,7 +48,8 @@ if (
   booking.payoutEligibleAt > now
 ) {
   const error = new Error(
-    "Booking is still within the 15-day payout hold"
+    // "Booking is still within the 15-day payout hold"
+    "Booking has not reached its payout eligibility time"
   );
   error.statusCode = 409;
   throw error;

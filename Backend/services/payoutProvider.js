@@ -1,28 +1,59 @@
+
 const crypto = require("node:crypto");
+const mongoose = require("mongoose");
 
 /**
- * MOCK PAYOUT ADAPTER.
+ * MOCK PAYOUT ADAPTER
  *
- * Spec §2 / §12 (go-live gate): real mentor payouts require Razorpay Route
- * (or Cashfree Easy Split) marketplace approval, linked-account setup and
- * Indian compliance sign-off, none of which exist yet. Until that approval
- * lands, this adapter simulates a provider transfer so the rest of the
- * payout pipeline (worker, state machine, admin UI, reconciliation) can be
- * built and tested end-to-end.
- *
- * Swap-in point: replace the body of `initiateTransfer` with a real
- * `razorpayX.transfers.create(...)` (or Cashfree Easy Split) call, keep the
- * same return shape ({ providerTransferId, status }).
+ * IMPORTANT:
+ * - Mock payouts are allowed only in the throne8_test database.
+ * - Production payouts remain disabled until a real provider is integrated.
+ * - Mock success is a simulation, NOT an actual bank transfer.
  */
 
-const MOCK_FAILURE_RATE = 0; // set >0 locally to rehearse failure handling
+const MOCK_FAILURE_RATE = 0;
 
-async function initiateTransfer({ mentorAccount, amountPaise, idempotencyKey }) {
+async function initiateTransfer({
+  mentorAccount,
+  amountPaise,
+  idempotencyKey,
+}) {
+  // Never simulate a payout in production or in any non-test database.
+  if (
+    process.env.NODE_ENV === "production" ||
+    mongoose.connection.name !== "throne8_test"
+  ) {
+    const error = new Error(
+      "Mock payouts are allowed only with the throne8_test database"
+    );
+    error.statusCode = 503;
+    error.code = "MOCK_PAYOUTS_DISABLED";
+    throw error;
+  }
+
   if (!mentorAccount?.providerAccountId) {
     const error = new Error(
-      "Mentor has no linked payout account; cannot transfer"
+      "Mentor has no linked payout account; cannot simulate transfer"
     );
     error.code = "NO_LINKED_ACCOUNT";
+    throw error;
+  }
+
+  if (
+    !Number.isSafeInteger(amountPaise) ||
+    amountPaise <= 0
+  ) {
+    const error = new Error("Invalid payout amount");
+    error.code = "INVALID_PAYOUT_AMOUNT";
+    throw error;
+  }
+
+  if (
+    typeof idempotencyKey !== "string" ||
+    idempotencyKey.trim().length === 0
+  ) {
+    const error = new Error("A valid idempotency key is required");
+    error.code = "INVALID_IDEMPOTENCY_KEY";
     throw error;
   }
 
@@ -51,19 +82,23 @@ async function initiateTransfer({ mentorAccount, amountPaise, idempotencyKey }) 
 
 async function fetchTransferStatus(providerTransferId) {
   if (!providerTransferId) {
-    const error = new Error("Transfer ID is required for reconciliation");
+    const error = new Error(
+      "Transfer ID is required for reconciliation"
+    );
     error.code = "TRANSFER_ID_REQUIRED";
     throw error;
   }
 
-  // Mock adapter cannot verify real provider status.
-  // Never assume that an unknown transfer succeeded.
+  // A mock adapter cannot verify an actual bank transfer.
   return {
     providerTransferId,
     status: "UNKNOWN",
     failureCode: null,
-    failureMessage: "Mock provider cannot verify transfer status",
+    failureMessage: "Mock provider cannot verify real transfer status",
   };
 }
 
-module.exports = { initiateTransfer, fetchTransferStatus };
+module.exports = {
+  initiateTransfer,
+  fetchTransferStatus,
+};
