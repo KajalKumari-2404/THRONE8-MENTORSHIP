@@ -240,155 +240,139 @@ if (!token) {
   };
 
   return (
-    <main className="payment-page">
-      <section className="payment-card">
-        <p className="brand">THRONE8</p>
-
-        <div className="payment-heading">
-          <span className="eyebrow">MENTORSHIP EXPERIENCE</span>
-          <h1>Mentorship Payment</h1>
-          <p className="subtitle">
-            Complete your session payment through our secure Razorpay
-            checkout.
-          </p>
-        </div>
-
-        <div className={`payment-status status-${status}`} role="status">
-          <span className="status-dot" />
-          <span>{statusLabels[status]}</span>
-        </div>
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            handlePayment();
-          }}
-        >
-          <label htmlFor="bookingId">Booking ID</label>
-          <input
-            id="bookingId"
-            value={bookingId}
-            onChange={(event) => setBookingId(event.target.value)}
-            placeholder="Paste your booking ID"
-            autoComplete="off"
-            required
-          />
-
-          <div className="payment-account-info">
-  <span className="payment-account-dot" />
-  <div>
-    <strong>Student account authenticated</strong>
-    <p>Your login session will be used securely.</p>
-  </div>
-</div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Please wait..." : "Pay Now — Test Mode"}
-          </button>
-        </form>
-
-        {message && (
-          <div className={`status-message message-${status}`}>
-            <strong>
-              {status === "success"
-                ? "Payment confirmed"
-                : status === "pending"
-                  ? "Verification pending"
-                  : status === "error"
-                    ? "Payment needs attention"
-                    : "Please wait"}
-            </strong>
-            <p>{message}</p>
+    <main className="payment-page payment-page-v2">
+      <div className="payment-shell">
+        <header className="payment-topbar">
+          <div className="payment-brand-lockup">
+            <span className="payment-brand-mark">T8</span>
+            <div>
+              <strong>THRONE8</strong>
+              <span>MENTORSHIP</span>
+            </div>
           </div>
-        )}
+          <div className="payment-secure-label"><span aria-hidden="true">●</span> Secure checkout</div>
+        </header>
 
-        {status === "success" && receipt && (
-          <section className="receipt">
-            <div className="receipt-heading">
-              <span className="receipt-check">✓</span>
+        <div className="payment-intro">
+          <span className="payment-eyebrow">YOUR NEXT STEP STARTS HERE</span>
+          <h1>Confirm your mentorship session</h1>
+          <p>Complete your payment securely. Your booking is confirmed only after the server verifies the payment.</p>
+        </div>
+
+        <div className="payment-layout">
+          <section className="payment-card payment-card-main">
+            <div className="payment-card-heading">
               <div>
-                <h2>Payment Receipt</h2>
-                <p>Server verification completed</p>
+                <span className="payment-step-label">STEP 1 OF 2</span>
+                <h2>Booking details</h2>
+                <p>Use the booking ID created when you requested your session.</p>
               </div>
+              <span className="payment-heading-icon" aria-hidden="true">↗</span>
             </div>
 
-            <div className="receipt-row">
-              <span>Payment status</span>
-              <strong>{receipt.paymentStatus}</strong>
+            <div className={`payment-status status-${status}`} role="status" aria-live="polite">
+              <span className="status-dot" />
+              <span>{statusLabels[status]}</span>
             </div>
 
-            <div className="receipt-row">
-              <span>Booking status</span>
-              <strong>{receipt.bookingStatus}</strong>
-            </div>
-
-            <div className="receipt-row">
-              <span>Total paid</span>
-              <strong>
-                {receipt.amountPaise != null
-                  ? formatINR(receipt.amountPaise)
-                  : "Unavailable"}
-              </strong>
-            </div>
-
-            <div className="receipt-row">
-              <span>Platform commission</span>
-              <strong>
-                {receipt.commissionPaise != null
-                  ? formatINR(receipt.commissionPaise)
-                  : "Unavailable"}
-              </strong>
-            </div>
-
-            <div className="receipt-row">
-              <span>Mentor earning</span>
-              <strong>
-                {receipt.mentorGrossPaise != null
-                  ? formatINR(receipt.mentorGrossPaise)
-                  : "Unavailable"}
-              </strong>
-            </div>
-
-            <div className="receipt-row">
-              <span>Payment ID</span>
-              <strong className="receipt-id">{receipt.paymentId}</strong>
-            </div>
-
-            <div className="receipt-row">
-              <span>Order ID</span>
-              <strong className="receipt-id">{receipt.orderId}</strong>
-            </div>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => window.print()}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handlePayment();
+              }}
             >
-              Print / Save Receipt
-            </button>
+              <label htmlFor="bookingId">Booking ID</label>
+              <input
+                id="bookingId"
+                value={bookingId}
+                onChange={(event) => setBookingId(event.target.value)}
+                placeholder="Paste your booking ID"
+                autoComplete="off"
+                required
+                aria-describedby="booking-help"
+              />
+              <p className="payment-field-help" id="booking-help">The booking ID links this payment to your session. The server validates ownership and amount.</p>
+
+              <div className="payment-account-info">
+                <span className="payment-account-dot" />
+                <div>
+                  <strong>Student session detected</strong>
+                  <p>Your authenticated login is used for this payment.</p>
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading}>
+                {loading ? "Preparing secure checkout…" : "Continue to secure payment"}
+                {!loading && <span aria-hidden="true">→</span>}
+              </button>
+            </form>
+
+            {message && (
+              <div className={`status-message message-${status}`}>
+                <strong>
+                  {status === "success"
+                    ? "Payment confirmed"
+                    : status === "pending"
+                      ? "Verification pending"
+                      : status === "error"
+                        ? "Payment needs attention"
+                        : "Please wait"}
+                </strong>
+                <p>{message}</p>
+              </div>
+            )}
+
+            {status === "success" && receipt && (
+              <section className="receipt" aria-labelledby="receipt-title">
+                <div className="receipt-heading">
+                  <span className="receipt-check">✓</span>
+                  <div>
+                    <h2 id="receipt-title">Payment receipt</h2>
+                    <p>Verified by the THRONE8 server</p>
+                  </div>
+                </div>
+                <div className="receipt-row"><span>Payment status</span><strong>{receipt.paymentStatus}</strong></div>
+                <div className="receipt-row"><span>Booking status</span><strong>{receipt.bookingStatus}</strong></div>
+                <div className="receipt-row"><span>Total paid</span><strong>{receipt.amountPaise != null ? formatINR(receipt.amountPaise) : "Unavailable"}</strong></div>
+                <div className="receipt-row"><span>Platform commission</span><strong>{receipt.commissionPaise != null ? formatINR(receipt.commissionPaise) : "Unavailable"}</strong></div>
+                <div className="receipt-row"><span>Mentor earning snapshot</span><strong>{receipt.mentorGrossPaise != null ? formatINR(receipt.mentorGrossPaise) : "Unavailable"}</strong></div>
+                <div className="receipt-row"><span>Payment ID</span><strong className="receipt-id">{receipt.paymentId}</strong></div>
+                <div className="receipt-row"><span>Order ID</span><strong className="receipt-id">{receipt.orderId}</strong></div>
+                <button type="button" className="secondary-button" onClick={() => window.print()}>Print / Save receipt</button>
+              </section>
+            )}
+
+            {(status === "error" || status === "pending") && (
+              <button type="button" className="secondary-button" onClick={() => { setStatus("idle"); setMessage(""); setReceipt(null); }}>
+                Return to payment form
+              </button>
+            )}
           </section>
-        )}
 
-        {(status === "error" || status === "pending") && (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setStatus("idle");
-              setMessage("");
-              setReceipt(null);
-            }}
-          >
-            Try Again
-          </button>
-        )}
+          <aside className="payment-side-column">
+            <section className="payment-card payment-summary-card">
+              <span className="payment-step-label">PAYMENT SUMMARY</span>
+              <h2>Secure Razorpay checkout</h2>
+              <p className="payment-summary-copy">Your final amount is calculated by the backend from your booking. It cannot be edited in this form.</p>
+              <div className="payment-summary-row"><span>Booking reference</span><strong>{bookingId.trim() || "Not entered yet"}</strong></div>
+              <div className="payment-summary-row"><span>Payment provider</span><strong>Razorpay</strong></div>
+              <div className="payment-summary-total"><span>Amount</span><strong>{receipt?.amountPaise != null ? formatINR(receipt.amountPaise) : "Calculated securely"}</strong></div>
+              <div className="payment-provider-note"><span aria-hidden="true">✓</span><p>Card and UPI details are entered on the provider’s secure checkout, not stored by THRONE8.</p></div>
+            </section>
 
-        <p className="security-note">
-          Test mode only. Never share your login token or Razorpay secret key.
-          Payment status is confirmed by the backend, not by the checkout
-          screen alone.
-        </p>
-      </section>
+            <section className="payment-card payment-steps-card">
+              <h2>What happens next?</h2>
+              <ol className="payment-timeline">
+                <li className={status !== "idle" && status !== "error" ? "is-done" : "is-current"}><span>1</span><div><strong>Create secure order</strong><p>Server checks your booking and prepares checkout.</p></div></li>
+                <li className={status === "processing" || status === "pending" || status === "success" ? "is-current" : ""}><span>2</span><div><strong>Verify payment</strong><p>Payment confirmation is checked by the server.</p></div></li>
+                <li className={status === "success" ? "is-done" : ""}><span>3</span><div><strong>Confirm your booking</strong><p>We show success only after verification succeeds.</p></div></li>
+              </ol>
+            </section>
+          </aside>
+        </div>
+
+        <footer className="payment-footer"><span>🔒 Protected payment flow</span><span>Never share your password, login token or provider secrets.</span></footer>
+      </div>
     </main>
   );
 }
