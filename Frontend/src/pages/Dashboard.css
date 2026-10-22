@@ -1416,3 +1416,345 @@
     transition: none;
   }
 }
+
+
+
+/* =========================================
+   THRONE8 — Dashboard Final Polish
+========================================= */
+
+/* Consistent, polished interactions */
+.dashboard-panel {
+  border-color: rgba(196, 181, 253, 0.11);
+}
+
+.stat-card {
+  isolation: isolate;
+}
+
+.stat-card::after {
+  position: absolute;
+  right: -35px;
+  bottom: -55px;
+  z-index: -1;
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background: rgba(167, 139, 250, 0.045);
+  content: "";
+  pointer-events: none;
+}
+
+.booking-search,
+.booking-filter {
+  min-height: 46px;
+  border-color: rgba(196, 181, 253, 0.17);
+}
+
+.booking-search:focus-visible,
+.booking-filter:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.booking-card {
+  min-width: 0;
+}
+
+.booking-person,
+.booking-details,
+.booking-status {
+  overflow-wrap: anywhere;
+}
+
+.confirm-session-button:focus-visible,
+.dispute-session-button:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
+.dashboard-message .primary-button,
+.dashboard-message .secondary-button {
+  margin-top: 8px;
+}
+
+/* Improve layout on smaller laptops */
+@media (min-width: 651px) and (max-width: 900px) {
+  .bookings-section,
+  .account-card {
+    padding: 22px;
+  }
+
+  .booking-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .booking-main {
+    grid-column: 1 / -1;
+  }
+
+  .booking-status {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Prevent narrow-screen overflow */
+@media (max-width: 380px) {
+  .student-dashboard {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .dashboard-hero {
+    padding: 23px 16px;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 26px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-caption {
+    font-size: 8px;
+  }
+
+  .bookings-section,
+  .account-card {
+    padding: 15px 11px;
+  }
+
+  .section-heading > .secondary-button {
+    width: 100%;
+  }
+}
+
+
+
+/* =========================================
+   THRONE8 — Final Booking Card Polish
+   Shared by Student and Mentor Dashboards
+========================================= */
+
+/* Consistent booking card layout */
+.booking-card {
+  min-width: 0;
+  border-color: rgba(196, 181, 253, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.booking-card:not(.booking-card-pending):hover {
+  border-color: rgba(167, 139, 250, 0.38);
+}
+
+/* Clear and consistent status badges */
+.booking-status .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Confirmed */
+.booking-status .status-confirmed {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.09);
+  color: #7dd3fc;
+}
+
+/* Completed */
+.booking-status .status-completed {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(16, 185, 129, 0.09);
+  color: #6ee7b7;
+}
+
+/* Payment pending */
+.booking-status .status-pending_payment {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+}
+
+/* Disputed */
+.booking-status .status-disputed {
+  border-color: rgba(251, 146, 60, 0.3);
+  background: rgba(249, 115, 22, 0.09);
+  color: #fdba74;
+}
+
+/* Cancelled and expired */
+.booking-status .status-cancelled,
+.booking-status .status-expired {
+  border-color: rgba(167, 158, 184, 0.22);
+  background: rgba(148, 139, 165, 0.08);
+  color: #c4bfd2;
+}
+
+/* Session information */
+.booking-person h3,
+.booking-person p,
+.booking-details strong,
+.booking-status small {
+  overflow-wrap: anywhere;
+}
+
+.booking-status > small {
+  display: block;
+  max-width: 100%;
+  color: #aaa5bd;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* Action buttons: keyboard accessibility and disabled state */
+.booking-status .confirm-session-button:focus-visible,
+.booking-status .dispute-session-button:focus-visible,
+.booking-status .pending-pay-button:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
+.booking-status .confirm-session-button:disabled,
+.booking-status .dispute-session-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Prevent content overflow on smaller screens */
+@media (max-width: 650px) {
+  .booking-card {
+    gap: 15px 12px;
+    padding: 15px;
+  }
+
+  .booking-status {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .booking-status .status-badge {
+    white-space: normal;
+  }
+
+  .booking-status .completion-actions {
+    width: 100%;
+    max-width: none;
+  }
+
+  .booking-status .confirm-session-button,
+  .booking-status .dispute-session-button,
+  .booking-status .pending-pay-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-card,
+  .booking-status button {
+    transition: none !important;
+  }
+}
+
+
+/* Session lifecycle status */
+.session-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--state-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--state-bg, #f8fafc);
+  color: var(--state-text, #334155);
+}
+
+.session-state > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.session-state strong {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.session-state small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.session-state-dot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--state-dot, #64748b);
+}
+
+.session-state-upcoming {
+  --state-bg: #eff6ff;
+  --state-border: #bfdbfe;
+  --state-text: #1d4ed8;
+  --state-dot: #3b82f6;
+}
+
+.session-state-session-ended {
+  --state-bg: #fff7ed;
+  --state-border: #fed7aa;
+  --state-text: #9a3412;
+  --state-dot: #f97316;
+}
+
+.session-state-completion-requested {
+  --state-bg: #f5f3ff;
+  --state-border: #ddd6fe;
+  --state-text: #6d28d9;
+  --state-dot: #8b5cf6;
+}
+
+.session-state-completed {
+  --state-bg: #f0fdf4;
+  --state-border: #bbf7d0;
+  --state-text: #166534;
+  --state-dot: #22c55e;
+}
+
+.session-state-disputed {
+  --state-bg: #fef2f2;
+  --state-border: #fecaca;
+  --state-text: #b91c1c;
+  --state-dot: #ef4444;
+}
+
+@media (max-width: 600px) {
+  .session-state {
+    padding: 11px 12px;
+  }
+
+  .session-state small {
+    font-size: 11px;
+  }
+}

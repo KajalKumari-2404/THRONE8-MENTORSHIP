@@ -122,6 +122,70 @@ const processCapturedPayment = async ({
         throw error;
       }
 
+      // if (booking.status !== "PENDING_PAYMENT") {
+      //   const error = new Error(
+      //     `Booking cannot be confirmed from ${booking.status} state`
+      //   );
+      //   error.statusCode = 409;
+      //   throw error;
+      // }
+
+
+      if (["EXPIRED", "CANCELLED"].includes(booking.status)) {
+        const now = new Date();
+
+        payment.status = "CAPTURED";
+        payment.gatewayPaymentId = paymentId;
+        payment.capturedAt = now;
+        payment.refundStatus = "PENDING";
+        payment.rawProviderRefs = {
+          ...(payment.rawProviderRefs || {}),
+          captureSource: source || "unknown",
+          lateCaptureNeedsRefundReview: true,
+          lateCaptureOriginalBookingStatus: booking.status,
+          lateCaptureDetectedAt: now.toISOString(),
+        };
+
+        await payment.save({ session });
+
+        await LedgerEntryModel.updateOne(
+          {
+            eventKey: `razorpay:${paymentId}:captured`,
+          },
+          {
+            $setOnInsert: {
+              bookingId: booking._id,
+              paymentId: payment._id,
+              entryType: "PAYMENT_CAPTURED",
+              account: "GATEWAY",
+              direction: "DEBIT",
+              amountPaise: amount,
+              currency,
+              eventKey: `razorpay:${paymentId}:captured`,
+              description: "Razorpay payment captured for expired/cancelled booking",
+              metadata: {
+                orderId,
+                paymentId,
+                source: source || "unknown",
+                lateCaptureNeedsRefundReview: true,
+              },
+            },
+          },
+          { upsert: true, session }
+        );
+
+        result = {
+          alreadyCaptured: false,
+          lateCaptureNeedsRefundReview: true,
+          paymentStatus: payment.status,
+          bookingStatus: booking.status,
+          message:
+            "Payment captured after booking expiry/cancellation. Refund review is required; booking was not confirmed.",
+        };
+
+        return;
+      }
+
       if (booking.status !== "PENDING_PAYMENT") {
         const error = new Error(
           `Booking cannot be confirmed from ${booking.status} state`
@@ -223,11 +287,19 @@ const processCapturedPayment = async ({
         { session, ordered: true }
       );
 
+      // result = {
+      //   alreadyCaptured: false,
+      //   paymentStatus: payment.status,
+      //   bookingStatus: booking.status,
+      // };
+
       result = {
-        alreadyCaptured: false,
-        paymentStatus: payment.status,
-        bookingStatus: booking.status,
-      };
+  alreadyCaptured: true,
+  lateCaptureNeedsRefundReview:
+    payment.rawProviderRefs?.lateCaptureNeedsRefundReview === true,
+  paymentStatus: payment.status,
+  bookingStatus: existingBooking.status,
+};
     });
 
     return result;

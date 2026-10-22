@@ -46,21 +46,52 @@ async function refundPayment({ bookingId, reason, requestedById }) {
         throw error;
       }
 
+      // payment = await PaymentModel.findOneAndUpdate(
+      //   {
+      //     bookingId: booking._id,
+      //     status: "CAPTURED",
+      //     refundStatus: { $in: ["NOT_REQUESTED", null] },
+      //   },
+      //   {
+      //     $set: {
+      //       refundStatus: "PENDING",
+      //       refundAmountPaise: 0,
+      //       refundRequestedAt: new Date(),
+      //     },
+      //   },
+      //   { new: true, session }
+      // );
+
+
       payment = await PaymentModel.findOneAndUpdate(
         {
           bookingId: booking._id,
           status: "CAPTURED",
-          refundStatus: { $in: ["NOT_REQUESTED", null] },
+          $or: [
+            {
+              refundStatus: { $in: ["NOT_REQUESTED", null] },
+            },
+            {
+              refundStatus: "PENDING",
+              refundAmountPaise: 0,
+              "rawProviderRefs.lateCaptureNeedsRefundReview": true,
+              "rawProviderRefs.lateCaptureRefundClaimed": {
+                $ne: true,
+              },
+            },
+          ],
         },
         {
           $set: {
             refundStatus: "PENDING",
             refundAmountPaise: 0,
             refundRequestedAt: new Date(),
+            "rawProviderRefs.lateCaptureRefundClaimed": true,
           },
         },
         { new: true, session }
       );
+
 
       if (!payment) {
         const error = new Error(

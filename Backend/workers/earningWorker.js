@@ -22,13 +22,17 @@ const earningWorker = new Worker(
 
     for (const earning of earnings) {
       try {
-        const booking = await BookingModel.findOne({
-          _id: earning.bookingId,
-          mentorId: earning.mentorId,
-          status: "COMPLETED",
-          completedAt: { $ne: null },
-          completionDisputedAt: null,
-        }).lean();
+
+const booking = await BookingModel.findOne({
+  _id: earning.bookingId,
+  mentorId: earning.mentorId,
+  status: "COMPLETED",
+  completionRequestedAt: { $ne: null },
+  studentConfirmedAt: { $ne: null },
+  completedAt: { $ne: null },
+  payoutEligibleAt: { $ne: null, $lte: now },
+  completionDisputedAt: null,
+}).lean();
 
         if (!booking) {
           held++;

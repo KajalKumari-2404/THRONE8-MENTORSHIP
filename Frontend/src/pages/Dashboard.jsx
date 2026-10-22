@@ -36,6 +36,62 @@ const statusLabel = (status) =>
     DISPUTED: "Under Dispute",
   })[status] || status || "Unknown";
 
+
+const getSessionState = (booking) => {
+  if (booking.status === "DISPUTED" || booking.completionDisputedAt) {
+    return {
+      key: "disputed",
+      label: "Under dispute",
+      description: "This session is awaiting review.",
+    };
+  }
+
+  if (
+    booking.status === "COMPLETED" ||
+    booking.studentConfirmedAt ||
+    booking.completedAt
+  ) {
+    return {
+      key: "completed",
+      label: "Completed",
+      description: "Session completion confirmed by the student.",
+    };
+  }
+
+  if (booking.completionRequestedAt) {
+    return {
+      key: "completion-requested",
+      label: "Completion requested",
+      description: "Student confirmation is pending.",
+    };
+  }
+
+  if (booking.status === "CONFIRMED") {
+    const endTime = new Date(booking.slotEnd).getTime();
+
+    if (Number.isFinite(endTime) && endTime > Date.now()) {
+      return {
+        key: "upcoming",
+        label: "Upcoming session",
+        description: "Available after the scheduled session ends.",
+      };
+    }
+
+    return {
+      key: "session-ended",
+      label: "Session ended",
+      description: "Waiting for the mentor to request completion.",
+    };
+  }
+
+  return {
+    key: "booking-status",
+    label: statusLabel(booking.status),
+    description: "",
+  };
+};
+
+
 const getPerson = (booking, isMentor) =>
   isMentor ? booking.studentId : booking.mentorId;
 
@@ -287,7 +343,8 @@ const sortedBookings = [...filteredBookings].sort((a, b) => {
           icon: "₹",
           label: "Payment Pending",
           value: pendingPayment,
-          caption: `${disputed} booking${disputed === 1 ? "" : "s"} under dispute`,
+          // caption: `${disputed} booking${disputed === 1 ? "" : "s"} under dispute`,
+          caption: "Awaiting payment confirmation",
         },
       ];
 
@@ -352,12 +409,11 @@ const sortedBookings = [...filteredBookings].sort((a, b) => {
               className={`stat-card ${index === 0 ? "stat-card-purple" : ""}`}
               key={stat.label}
             >
-              <div className="stat-top">
-                <span className="stat-icon">{stat.icon}</span>
-                <span className="stat-caption">
-                  {loading ? "Loading" : "Overview"}
-                </span>
-              </div>
+
+<div className="stat-top">
+  <span className="stat-icon">{stat.icon}</span>
+</div>
+
 
               <span className="stat-label">{stat.label}</span>
               <strong>{loading ? "—" : stat.value}</strong>
@@ -492,9 +548,10 @@ const sortedBookings = [...filteredBookings].sort((a, b) => {
                   personName.trim().charAt(0).toUpperCase() || "T";
 
                 const isActionLoading =
-                  actionLoading === booking._id; 
-                  
-                  
+                  actionLoading === booking._id;
+                  const sessionState = getSessionState(booking);
+
+
 return (
   <article
     className={`booking-card ${
@@ -537,6 +594,19 @@ return (
         {statusLabel(booking.status)}
       </span>
 
+      {["CONFIRMED", "COMPLETED", "DISPUTED"].includes(booking.status) && (
+  <div
+    className={`session-state session-state-${sessionState.key}`}
+    role="status"
+  >
+    <span className="session-state-dot" aria-hidden="true" />
+    <div>
+      <strong>{sessionState.label}</strong>
+      <small>{sessionState.description}</small>
+    </div>
+  </div>
+)}
+
       {!isMentor && booking.status === "PENDING_PAYMENT" && (
         <div className="completion-actions">
           <p className="pending-payment-hint">
@@ -565,23 +635,25 @@ return (
         )}
 
       {isMentor &&
-        booking.status === "CONFIRMED" &&
-        !booking.completionRequestedAt &&
-        !booking.studentConfirmedAt &&
-        !booking.completionDisputedAt && (
-          <div className="completion-actions">
-            <button
-              type="button"
-              className="confirm-session-button"
-              disabled={isActionLoading}
-              onClick={() => requestCompletion(booking._id)}
-            >
-              {isActionLoading
-                ? "Please wait..."
-                : "Request Session Completion"}
-            </button>
-          </div>
-        )}
+  booking.status === "CONFIRMED" &&
+  Number.isFinite(new Date(booking.slotEnd).getTime()) &&
+  new Date(booking.slotEnd).getTime() <= Date.now() &&
+  !booking.completionRequestedAt &&
+  !booking.studentConfirmedAt &&
+  !booking.completionDisputedAt && (
+    <div className="completion-actions">
+      <button
+        type="button"
+        className="confirm-session-button"
+        disabled={isActionLoading}
+        onClick={() => requestCompletion(booking._id)}
+      >
+        {isActionLoading
+          ? "Please wait..."
+          : "Request Session Completion"}
+      </button>
+    </div>
+  )}
 
       {!isMentor &&
         booking.status === "CONFIRMED" &&
@@ -623,8 +695,8 @@ return (
       )}
     </div>
   </article>
-);      
-                   
+);
+
               })}
             </div>
           )}

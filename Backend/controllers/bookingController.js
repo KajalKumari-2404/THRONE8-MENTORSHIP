@@ -318,11 +318,11 @@ const confirmSessionCompletion = async (req, res) => {
       }
 
       const now = new Date();
-    //   const eligibleAt = new Date(now);
-    //  eligibleAt.setDate(eligibleAt.getDate() + 15);
+      const eligibleAt = new Date(now);
+     eligibleAt.setDate(eligibleAt.getDate() + 15);
 
     // const eligibleAt = new Date(now.getTime() +  * 60 * 1000); // 5 minute
-    const eligibleAt = new Date(now.getTime() + 1 * 60 * 1000); // 1 minute
+    // const eligibleAt = new Date(now.getTime() + 1 * 60 * 1000); // 1 minute
 
 
       booking.studentConfirmedAt = now;
@@ -340,7 +340,9 @@ const confirmSessionCompletion = async (req, res) => {
       response = {
         success: true,
         message:
-          "Session confirmed. Earnings will become eligible after 1 minute, subject to refund and dispute checks.",
+          // "Session confirmed. Earnings will become eligible after 1 minute, subject to refund and dispute checks.",
+          // "Earnings will become eligible after 15 calendar days, subject to refund and dispute checks.",
+          "Session confirmed successfully. Earnings will become eligible after 15 calendar days, subject to refund and dispute checks.",
         booking,
         earning,
       };

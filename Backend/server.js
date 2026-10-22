@@ -10,10 +10,14 @@ const redisConnection = require("./config/redis");
 const { Queue } = require("bullmq");
 const earningWorker = require("./workers/earningWorker");
 const app = require("./app");
+const bookingExpiryWorker = require("./workers/bookingExpiryWorker");
 
 const PORT = process.env.PORT || 5000;
 
 const earningQueue = new Queue("earning-eligibility", {
+  connection: redisConnection,
+});
+const bookingExpiryQueue = new Queue("booking-expiry", {
   connection: redisConnection,
 });
 
@@ -30,7 +34,20 @@ const startServer = async () => {
       }
     );
 
+
     console.log("Earning eligibility scheduler started");
+
+    await bookingExpiryQueue.upsertJobScheduler(
+      "booking-expiry-scheduler",
+      { every: 60 * 1000 },
+      {
+        name: "expire-pending-bookings",
+        data: {},
+      }
+    );
+
+    console.log("Booking expiry scheduler started");
+
 
     app.listen(PORT, () => {
       console.log(`THRONE8 server running on port ${PORT}`);
@@ -45,6 +62,8 @@ const shutdown = async () => {
   console.log("Shutting down THRONE8...");
   await earningWorker.close();
   await earningQueue.close();
+  await bookingExpiryQueue.close();
+  await bookingExpiryWorker.close();
   await redisConnection.quit();
   process.exit(0);
 };
