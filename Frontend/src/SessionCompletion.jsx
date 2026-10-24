@@ -2,8 +2,8 @@
 import { useState } from "react";
 import "./SessionCompletion.css";
 
-// const API_URL = "http://localhost:5000/api/v1";
-const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
+const API_URL = "http://localhost:5000/api/v1";
+// const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
 
 function getStoredUser() {
   try {

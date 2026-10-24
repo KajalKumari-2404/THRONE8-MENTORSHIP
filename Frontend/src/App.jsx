@@ -32,8 +32,8 @@ import AdminFinance from "./pages/AdminFinance";
 import Navbar from "./Navbar";
 import BookSession from "./pages/BookSession";
 
-// const API_URL = "http://localhost:5000/api/v1";
-const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
+const API_URL = "http://localhost:5000/api/v1";
+// const API_URL = "https://throne8-mentorship-api.onrender.com/api/v1";
 
 const formatINR = (paise = 0) =>
   new Intl.NumberFormat("en-IN", {

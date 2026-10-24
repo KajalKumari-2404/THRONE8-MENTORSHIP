@@ -3,6 +3,50 @@ require("dotenv").config({
   path: require("path").join(__dirname, ".env"),
 });
 
+if (process.env.NODE_ENV !== "test") {
+  console.error(
+    "BLOCKED: This test can run only with NODE_ENV=test."
+  );
+  process.exit(1);
+}
+
+if (!process.env.MONGO_TEST_URI) {
+  console.error(
+    "BLOCKED: MONGO_TEST_URI is required for this test."
+  );
+  process.exit(1);
+}
+
+require("dotenv").config({
+  path: require("path").join(__dirname, ".env"),
+});
+
+
+if (process.env.NODE_ENV !== "test") {
+  throw new Error("BLOCKED: NODE_ENV must be test.");
+}
+
+if (!process.env.MONGO_TEST_URI) {
+  throw new Error("BLOCKED: MONGO_TEST_URI is missing.");
+}
+
+let testDatabaseName;
+
+try {
+  testDatabaseName = new URL(
+    process.env.MONGO_TEST_URI
+  ).pathname.replace(/^\/+/, "");
+} catch {
+  throw new Error("BLOCKED: MONGO_TEST_URI is invalid.");
+}
+
+if (testDatabaseName !== "throne8_test") {
+  throw new Error(
+    "BLOCKED: Expected database throne8_test; refusing to run."
+  );
+}
+
+
 const mongoose = require("mongoose");
 const PaymentModel = require("./models/paymentModel");
 const EarningModel = require("./models/earningModel");
